@@ -1,0 +1,7 @@
+{
+  "files": ["Index.html"],
+  "exclude": [],
+  "insertBefore": "</body>",
+  "commentSyntax": "html",
+  "cspChecked": true
+}

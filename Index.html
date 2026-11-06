@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#020617">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+  <?!= include('Style'); ?>
+</head>
+<body class="public-app">
+  <a href="#app" class="skip-link sr-only">Langsung ke konten utama</a>
+  <header class="top">
+    <div class="wrap topbar">
+      <a class="brand" id="brand" href="#" role="button"></a>
+      <nav id="nav" class="nav" aria-label="Menu utama"></nav>
+      <div class="top-actions" id="top-actions"></div>
+      <button class="burger" id="burger" type="button" aria-label="Menu" aria-controls="nav" aria-expanded="false"><svg class="i-open" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg><svg class="i-close" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+  </header>
+
+  <main id="app" class="wrap" role="main" aria-label="Konten utama" tabindex="-1"></main>
+
+  <footer class="foot">
+    <div class="wrap" id="foot"></div>
+  </footer>
+
+  <div id="toasts" aria-live="polite"></div>
+  <div id="busy" class="busy hidden"><div class="spin"></div></div>
+  <div id="modal"></div>
+  <div id="reader-file" style="display:none"></div>
+
+  <!-- Library: QR generator (client) dan QR scanner (kamera) via CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script>const BOOT = <?!= boot ?>;</script>
+  <script>
+    // Skip-link focus handling for keyboard users
+    document.querySelectorAll('.skip-link').forEach(function(link){
+      link.addEventListener('focus',function(){link.classList.remove('sr-only');});
+      link.addEventListener('blur',function(){link.classList.add('sr-only');});
+    });
+  </script>
+  <?!= include('JavaScript'); ?>
+</body>
+</html>

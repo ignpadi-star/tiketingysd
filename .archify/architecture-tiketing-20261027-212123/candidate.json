@@ -1,0 +1,236 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Arsitektur Aplikasi Tiket Kegiatan",
+    "subtitle": "Web App Google Apps Script: pendaftaran, verifikasi, e-tiket, gate, race pack",
+    "output": ".archify/architecture-tiketing-20261027-212123/tiketing-architecture.html",
+    "quality_profile": "showcase",
+    "locale": "id"
+  },
+  "components": [
+    {
+      "id": "users",
+      "type": "external",
+      "label": "Pengguna",
+      "sublabel": "Pembeli · Petugas · Gate",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        130,
+        64
+      ]
+    },
+    {
+      "id": "webapp",
+      "type": "frontend",
+      "label": "Web App",
+      "sublabel": "Index / Admin SPA",
+      "pos": [
+        230,
+        300
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "api() Gateway",
+      "sublabel": "ROUTES + token sesi",
+      "tag": "cek role",
+      "pos": [
+        460,
+        300
+      ],
+      "size": [
+        180,
+        70
+      ]
+    },
+    {
+      "id": "orders",
+      "type": "backend",
+      "label": "Pesanan & Tiket",
+      "sublabel": "ACC, e-tiket, race pack",
+      "pos": [
+        730,
+        300
+      ],
+      "size": [
+        190,
+        70
+      ]
+    },
+    {
+      "id": "gate",
+      "type": "backend",
+      "label": "Gate & Scan",
+      "sublabel": "QR check-in",
+      "pos": [
+        730,
+        470
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "sheets",
+      "type": "database",
+      "label": "Google Sheets",
+      "sublabel": "Orders, Tickets, ScanLog…",
+      "pos": [
+        1030,
+        300
+      ],
+      "size": [
+        170,
+        70
+      ]
+    },
+    {
+      "id": "cache",
+      "type": "database",
+      "label": "CacheService",
+      "sublabel": "sesi, settings, throttle",
+      "pos": [
+        380,
+        110
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "drive",
+      "type": "cloud",
+      "label": "Google Drive",
+      "sublabel": "poster, bukti, background",
+      "pos": [
+        640,
+        110
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "mail",
+      "type": "cloud",
+      "label": "Gmail (MailApp)",
+      "sublabel": "e-tiket + gambar QR",
+      "pos": [
+        890,
+        110
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "users-webapp",
+      "from": "users",
+      "to": "webapp",
+      "label": "HTTPS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "webapp-api",
+      "from": "webapp",
+      "to": "api",
+      "label": "api()",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-orders",
+      "from": "api",
+      "to": "orders",
+      "label": "rute order"
+    },
+    {
+      "id": "orders-sheets",
+      "from": "orders",
+      "to": "sheets",
+      "label": "baca/tulis",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-gate",
+      "from": "api",
+      "to": "gate",
+      "label": "rute gate"
+    },
+    {
+      "id": "gate-sheets",
+      "from": "gate",
+      "to": "sheets",
+      "label": "tiket + log"
+    },
+    {
+      "id": "api-cache",
+      "from": "api",
+      "to": "cache",
+      "label": "sesi + cache"
+    },
+    {
+      "id": "api-drive",
+      "from": "api",
+      "to": "drive",
+      "label": "unggah"
+    },
+    {
+      "id": "orders-mail",
+      "from": "orders",
+      "to": "mail",
+      "label": "e-tiket + QR"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Alur tiket",
+      "items": [
+        "Pembeli memesan di halaman publik; bukti bayar diunggah ke folder Drive.",
+        "ACC verifikator membuat satu baris Tickets per tiket, plus RacePack bila event mengaktifkannya.",
+        "E-tiket dan QR dikirim lewat MailApp; staf dapat mengunduh atau mengirim ulang."
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Peran dan akses",
+      "items": [
+        "api() memeriksa token sesi dan daftar role pada setiap rute.",
+        "SUPER_ADMIN: kegiatan, pengguna, pengaturan, laporan.",
+        "VERIFIKATOR: ACC/tolak. STAF: race pack, kirim ulang, unduh tiket. GATE: scan dan check-in."
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Penyimpanan",
+      "items": [
+        "Satu spreadsheet: Events, TicketTypes, Orders, Tickets, RacePack, ScanLog, Users, Settings.",
+        "CacheService: sesi 6 jam, cache settings 5 menit, throttle login dan lacak pesanan.",
+        "Semua kode server berada di satu project Apps Script (Code.gs)."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Opsional",
+      "items": [
+        "Video promo Veo/Gemini lewat UrlFetchApp, butuh GEMINI_API_KEY.",
+        "QR untuk email diambil dari api.qrserver.com, dengan fallback URL langsung."
+      ]
+    }
+  ]
+}

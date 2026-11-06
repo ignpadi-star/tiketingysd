@@ -1,0 +1,340 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-03-22T00:00:00.000Z",
+  "title": "Design System: Ticketing",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Royal Blue",
+        "canonical": "#1d4ed8",
+        "notes": "Overridable at runtime via Settings sheet `warna_utama`. CSS variable: --primary.",
+        "tonalRamp": [
+          "#0b1f4a",
+          "#12337a",
+          "#1845a4",
+          "#1d4ed8",
+          "#4a73e0",
+          "#7a9be8",
+          "#a8c3f0",
+          "#dbe7fa"
+        ]
+      },
+      "accent": {
+        "role": "secondary",
+        "displayName": "Amber",
+        "canonical": "#f59e0b",
+        "notes": "Overridable at runtime via Settings sheet `warna_aksen`. CSS variable: --accent. Used for focus outlines and warning-variant buttons.",
+        "tonalRamp": [
+          "#3d2400",
+          "#6b4000",
+          "#995800",
+          "#f59e0b",
+          "#f7b34d",
+          "#fac085",
+          "#fbd3b5",
+          "#fff3dd"
+        ]
+      },
+      "ok": {
+        "role": "status-success",
+        "displayName": "Success Green",
+        "canonical": "#16a34a",
+        "tonalRamp": [
+          "#062d0a",
+          "#0f5a1d",
+          "#1a8c32",
+          "#16a34a",
+          "#4dc47a",
+          "#82dca6",
+          "#b8f2cf",
+          "#dcfce7"
+        ]
+      },
+      "bad": {
+        "role": "status-error",
+        "displayName": "Error Red",
+        "canonical": "#dc2626",
+        "tonalRamp": [
+          "#3d0000",
+          "#7a0a0a",
+          "#b91c1c",
+          "#dc2626",
+          "#ef6a6a",
+          "#f7a0a0",
+          "#fbcaca",
+          "#fee2e2"
+        ]
+      },
+      "warn": {
+        "role": "status-warning",
+        "displayName": "Warning Amber",
+        "canonical": "#ca8a04",
+        "tonalRamp": [
+          "#2d1f00",
+          "#5a4200",
+          "#8c6500",
+          "#ca8a04",
+          "#d9a53a",
+          "#e8c47a",
+          "#f3ddb5",
+          "#fef9c3"
+        ]
+      },
+      "ink": {
+        "role": "neutral-ink",
+        "displayName": "Ink",
+        "canonical": "#0f172a"
+      },
+      "muted": {
+        "role": "neutral-muted",
+        "displayName": "Muted",
+        "canonical": "#64748b"
+      },
+      "line": {
+        "role": "neutral-line",
+        "displayName": "Line",
+        "canonical": "#e2e8f0"
+      },
+      "bg": {
+        "role": "neutral-bg",
+        "displayName": "Background",
+        "canonical": "#f4f6fb"
+      },
+      "card": {
+        "role": "neutral-card",
+        "displayName": "Card",
+        "canonical": "#ffffff"
+      }
+    },
+    "typographyMeta": {
+      "body": {
+        "displayName": "Body",
+        "purpose": "Default paragraph and form text. 15px, 400 weight, 1.5 line-height."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Table headers, stat labels, field labels. 0.75–0.92rem, 600 weight, uppercase where applicable."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "Machine-generated IDs (ticket, order, username). ui-monospace stack, 0.9rem base."
+      }
+    },
+    "shadows": [
+      {
+        "name": "card",
+        "value": "0 1px 2px rgba(15,23,42,0.06), 0 4px 14px rgba(15,23,42,0.06)",
+        "purpose": "Default surface shadow on cards, stat cards, modals, toasts, and poster images."
+      },
+      {
+        "name": "card-hover",
+        "value": "0 10px 30px rgba(15,23,42,0.10)",
+        "purpose": "Deeper shadow on card hover, 0.2s ease transition."
+      },
+      {
+        "name": "header",
+        "value": "0 2px 8px rgba(0,0,0,0.15)",
+        "purpose": "Slightly heavier black-tinted shadow separating the sticky header from scrolling content."
+      }
+    ],
+    "motion": [
+      {
+        "name": "standard",
+        "value": "0.2s ease",
+        "purpose": "Default transition for background color, box-shadow, and opacity state changes."
+      },
+      {
+        "name": "quick",
+        "value": "0.1s",
+        "purpose": "Transform (scale) transition on button hover."
+      },
+      {
+        "name": "progress",
+        "value": "0.4s",
+        "purpose": "Width transition on gate progress bar fill."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "560px",
+        "purpose": "Two-column form grids (.row2) collapse to single column."
+      },
+      {
+        "name": "md",
+        "value": "760px",
+        "purpose": "Navigation collapses to stacked list; hero grid becomes single column."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Main call-to-action. Blue background, white text, 600 weight, 44px height.",
+      "html": "<button class=\"ds-btn-primary\">Pesan Sekarang</button>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:12px;background:#1d4ed8;color:#fff;padding:10px 18px;font:inherit;font-weight:600;cursor:pointer;text-decoration:none;min-height:44px;transition:background .2s,transform .1s}.ds-btn-primary:hover{background:color-mix(in srgb,#1d4ed8,#111);transform:scale(1.02)}.ds-btn-primary:focus-visible{outline:2px solid #f59e0b;outline-offset:2px}.ds-btn-primary:active{background:color-mix(in srgb,#1d4ed8,#000)}.ds-btn-primary:disabled{opacity:.5;cursor:not-allowed}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Alternative action. Light blue-gray background, dark ink text, 600 weight.",
+      "html": "<button class=\"ds-btn-secondary\">Batal</button>",
+      "css": ".ds-btn-secondary{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:12px;background:#e8edf7;color:#0f172a;padding:10px 18px;font:inherit;font-weight:600;cursor:pointer;text-decoration:none;min-height:44px;transition:background .2s,transform .1s}.ds-btn-secondary:hover{background:#d8dfee;transform:scale(1.02)}.ds-btn-secondary:focus-visible{outline:2px solid #f59e0b;outline-offset:2px}.ds-btn-secondary:disabled{opacity:.5;cursor:not-allowed}"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Low-emphasis action. Transparent background, blue text, 1px line-color border.",
+      "html": "<button class=\"ds-btn-ghost\">Kelola</button>",
+      "css": ".ds-btn-ghost{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid #e2e8f0;border-radius:12px;background:transparent;color:#1d4ed8;padding:10px 18px;font:inherit;font-weight:600;cursor:pointer;text-decoration:none;min-height:44px;transition:background .2s}.ds-btn-ghost:hover{background:rgba(29,78,216,.06)}.ds-btn-ghost:focus-visible{outline:2px solid #f59e0b;outline-offset:2px}"
+    },
+    {
+      "name": "Success Button",
+      "kind": "button",
+      "refersTo": "button-success",
+      "description": "Positive confirmation action (ACC). Solid green, white text.",
+      "html": "<button class=\"ds-btn-success\">ACC & Kirim E-Tiket</button>",
+      "css": ".ds-btn-success{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:12px;background:#16a34a;color:#fff;padding:10px 18px;font:inherit;font-weight:600;cursor:pointer;text-decoration:none;min-height:44px;transition:background .2s}.ds-btn-success:hover{background:#15803d}.ds-btn-success:focus-visible{outline:2px solid #f59e0b;outline-offset:2px}"
+    },
+    {
+      "name": "Danger Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Destructive action (Tolak, Hapus). Solid red, white text.",
+      "html": "<button class=\"ds-btn-danger\">Tolak Pesanan</button>",
+      "css": ".ds-btn-danger{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:12px;background:#dc2626;color:#fff;padding:10px 18px;font:inherit;font-weight:600;cursor:pointer;text-decoration:none;min-height:44px;transition:background .2s}.ds-btn-danger:hover{background:#b91c1c}.ds-btn-danger:focus-visible{outline:2px solid #f59e0b;outline-offset:2px}"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Default text input. White background, 10px radius, 1px input-border, 44px height.",
+      "html": "<input type=\"text\" class=\"ds-input\" placeholder=\"Nama lengkap\">",
+      "css": ".ds-input{width:100%;padding:11px 13px;border:1px solid #cbd5e1;border-radius:10px;font:inherit;background:#fff;color:#0f172a;min-height:44px;box-sizing:border-box}.ds-input:focus{outline:2px solid color-mix(in srgb,#1d4ed8 40%,transparent);border-color:#1d4ed8}"
+    },
+    {
+      "name": "Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Status label. Pill shape, 0.75rem, 600 weight. Variants: neutral, ok, bad, warn, info.",
+      "html": "<span class=\"ds-chip\">DRAFT</span>\n<span class=\"ds-chip ok\">AKTIF</span>\n<span class=\"ds-chip bad\">DITOLAK</span>\n<span class=\"ds-chip warn\">MENUNGGU</span>\n<span class=\"ds-chip info\">BUKA</span>",
+      "css": ".ds-chip{display:inline-block;padding:2px 10px;border-radius:999px;font-size:.75rem;font-weight:600;background:#e2e8f0;color:#334155;white-space:nowrap}.ds-chip.ok{background:#dcfce7;color:#166534}.ds-chip.bad{background:#fee2e2;color:#991b1b}.ds-chip.warn{background:#fef9c3;color:#854d0e}.ds-chip.info{background:#dbeafe;color:#1e40af}"
+    },
+    {
+      "name": "Stat Card",
+      "kind": "card",
+      "refersTo": "stat-card",
+      "description": "Dashboard metric card. Large primary-blue number, small muted label, 16px padding.",
+      "html": "<div class=\"ds-stat\"><div class=\"ds-stat-n\">1,248</div><div class=\"ds-stat-l\">Tiket terjual</div></div>",
+      "css": ".ds-stat{background:#fff;border-radius:12px;box-shadow:0 1px 2px rgba(15,23,42,.06),0 4px 14px rgba(15,23,42,.06);padding:16px;transition:box-shadow .2s ease}.ds-stat:hover{box-shadow:0 10px 30px rgba(15,23,42,.10)}.ds-stat-n{font-size:1.6rem;font-weight:700;color:#1d4ed8}.ds-stat-l{font-size:.82rem;color:#64748b}"
+    },
+    {
+      "name": "Alert",
+      "kind": "card",
+      "refersTo": "alert",
+      "description": "Inline status banner. 12px radius, 14px 16px padding. Variants: warn (default), error, success, info.",
+      "html": "<div class=\"ds-alert warn\">Menunggu pembayaran. Lakukan pembayaran lalu upload bukti.</div>\n<div class=\"ds-alert err\">Pesanan ditolak. Alasan: nominal transfer tidak sesuai.</div>\n<div class=\"ds-alert ok\">Pesanan berhasil dibuat.</div>\n<div class=\"ds-alert info\">Tiket gratis: menunggu verifikasi panitia.</div>",
+      "css": ".ds-alert{padding:14px 16px;border-radius:12px;margin-bottom:14px}.ds-alert.warn{background:#fef9c3;color:#713f12}.ds-alert.err{background:#fee2e2;color:#7f1d1d}.ds-alert.ok{background:#dcfce7;color:#14532d}.ds-alert.info{background:#dbeafe;color:#1e3a8a}"
+    },
+    {
+      "name": "Ticket Voucher",
+      "kind": "card",
+      "refersTo": "ticket",
+      "description": "Printable ticket card. 2px dashed border, 12px radius, centered layout, QR code box.",
+      "html": "<div class=\"ds-ticket\"><div class=\"ds-ticket-org\">Panitia Kegiatan</div><h3>Fun Walk Veritas</h3><div class=\"ds-ticket-meta\">01 Nov 2026 | 07:00 | Jakarta</div><div class=\"ds-ticket-id\">ABC1-DEF2-3456</div></div>",
+      "css": ".ds-ticket{border:2px dashed #e2e8f0;border-radius:12px;background:#fff;padding:16px;text-align:center}.ds-ticket-org{font-size:.8rem;color:#64748b;margin-bottom:4px}.ds-ticket h3{font-size:1.05rem;font-weight:700;margin:0 0 4px}.ds-ticket-meta{font-size:.85rem;color:#64748b;margin-bottom:8px}.ds-ticket-id{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:1rem;letter-spacing:.04em;color:#1d4ed8;font-weight:800}"
+    },
+    {
+      "name": "Progress Bar",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Gate check-in progress. Pill shape, 20px height, primary-blue fill, 0.4s width transition.",
+      "html": "<div class=\"ds-progress\"><div class=\"ds-progress-fill\" style=\"width:62%\"></div></div>",
+      "css": ".ds-progress{height:20px;border-radius:999px;background:#e2e8f0;overflow:hidden}.ds-progress-fill{height:100%;background:#1d4ed8;transition:width .4s}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Digital Gatehouse",
+    "overview": "This design system serves a practical, event-driven ticketing workflow: public purchase, manual payment verification, e-ticket delivery, and gate check-in. The visual language is deliberately restrained — one dominant blue accent, a calm neutral canvas, and status colors that appear only when an order or gate state demands attention. The system is mobile-first with a single-column flow below 760px, and it uses flat, low-contrast surfaces so that information density and readability always win over decorative flourish. All state colors are contextual by design: green means 'confirmed', red means 'rejected or invalid', amber means 'pending'. No decorative gradient or color wash appears outside the event poster card, which is the system's one sanctioned use of a primary-to-accent gradient to signal 'this is an event'.",
+    "keyCharacteristics": [
+      "Single primary accent (Royal Blue #1d4ed8) with a single secondary accent (Amber #f59e0b)",
+      "Flat surfaces; shadows appear only on raised containers (cards, modals, toasts, header)",
+      "12px radius as the universal container corner; 999px pill radius for chips and nav items",
+      "Status colors (green / red / amber) appear only in their semantic contexts",
+      "44px minimum touch-target height on all buttons and inputs",
+      "Mobile-first: below 760px, navigation collapses into a stacked full-width list"
+    ],
+    "rules": [
+      {
+        "name": "The One Accent Rule",
+        "body": "Primary blue (--primary) is the only chromatic color that is always present in the UI. Status colors appear only in their semantic contexts — order results, gate-scan results, alerts, and status chips. No decorative gradient or colored fill that does not carry state is permitted, with the sole exception of the event poster placeholder.",
+        "section": "colors"
+      },
+      {
+        "name": "The Neutral Canvas Rule",
+        "body": "The background (#f4f6fb) and card (#ffffff) colors are the default surface vocabulary. All content sits on white or the soft canvas. Colored surfaces (status backgrounds, the header, button fills) are reserved for state and interaction.",
+        "section": "colors"
+      },
+      {
+        "name": "The Runtime Override Rule",
+        "body": "--primary and --accent are CSS custom properties set via document.documentElement.style.setProperty() from the Settings sheet at boot time (applyTheme() in JavaScript.html). The values in DESIGN.md and Style.html are the defaults; a live deployment may show different hues. All component color references should use var(--primary) and var(--accent) where possible rather than hard-coded hex.",
+        "section": "colors"
+      },
+      {
+        "name": "The No Display Font Rule",
+        "body": "The system does not load a custom display face. Hierarchy comes from the system stack and weight/size scaling only. If a decorative header is needed, use the system font at a larger size and heavier weight — not a separate typeface.",
+        "section": "typography"
+      },
+      {
+        "name": "The Mono-for-IDs Rule",
+        "body": "Machine-generated identifiers (ticket IDs, order IDs, usernames, QR code text) always use the .mono class. This visually distinguishes user-facing data from prose and supports the gate scan-readback workflow.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat-By-Default Rule",
+        "body": "The page canvas is flat. Shadows appear only on raised surfaces (cards, stat cards, modals, toasts, the sticky header). No ambient shadow on the body element. Elevation changes on hover use a deeper blur (0 10px 30px) with the same slate tint; they never change color or add colored halos.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Two Shadows Only Rule",
+        "body": "The system defines exactly two shadow values: the card shadow and the header shadow. No new shadow layers may be introduced. If a new surface type needs elevation, reuse one of the two existing shadows.",
+        "section": "elevation"
+      },
+      {
+        "name": "The 12px Container Rule",
+        "body": "12px is the default radius for all card-like containers. Do not mix radii within a single card; the inner content should follow the outer shape. The toast (14px) and gate result banner (20px) are documented exceptions with distinct roles.",
+        "section": "shapes"
+      },
+      {
+        "name": "The Pill-Only Rule",
+        "body": "999px radius is reserved for chips, navigation pills, the progress bar, and the QR code container. No other element uses a pill shape.",
+        "section": "shapes"
+      }
+    ],
+    "dos": [
+      "Do use var(--primary) and var(--accent) for all interactive color references; the Settings sheet overrides these values at runtime.",
+      "Do keep primary blue as the only always-present accent. Status colors are contextual and must not be used for general decoration.",
+      "Do use the 44px minimum height for all buttons and input fields to maintain touch accessibility.",
+      "Do use 12px as the default radius for cards, buttons, modals, alerts, and ticket cards.",
+      "Do use the 999px pill radius only for chips, navigation pills, progress bars, and QR containers.",
+      "Do keep the shadow vocabulary to the two defined shadows (card shadow and header shadow). Do not add new shadow layers.",
+      "Do use the system font stack; do not load a custom web font.",
+      "Do use the .mono class for all machine-generated identifiers (ticket IDs, order IDs, usernames, QR text).",
+      "Do keep the single-column mobile layout below 760px.",
+      "Do use zebra striping (#f1f5f9 on even rows) for all data tables."
+    ],
+    "donts": [
+      "Don't use gradients for general backgrounds or fills. The event poster gradient (linear-gradient(135deg, var(--primary), var(--accent))) is the sole exception.",
+      "Don't use status colors (green, red, amber) for buttons or chips outside their semantic contexts (order results, gate scan results, alerts, ticket status).",
+      "Don't add hover shadows or elevation changes to the page canvas; the system is flat by default.",
+      "Don't use large radii (24px or more) on content cards; 12px is the ceiling for standard container shapes. The gate result banner (20px) and toast (14px) are documented exceptions.",
+      "Don't mix multiple accent colors on the same screen; one blue, one amber, and status colors are the full chromatic palette.",
+      "Don't use color as the sole indicator of status — always pair status color with text or icon, per accessibility commitment in PRODUCT.md."
+    ]
+  }
+}

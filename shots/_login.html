@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>dev login</title></head>
+<body>
+<script>
+  sessionStorage.setItem('tk', 'dev-token');
+  sessionStorage.setItem('us', JSON.stringify({ user_id: 'USR-1', nama: 'Super Admin', username: 'admin109', role: 'SUPER_ADMIN' }));
+  location.replace('/Admin.html');
+</script>
+</body></html>
