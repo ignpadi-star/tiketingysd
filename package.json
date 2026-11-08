@@ -5,7 +5,8 @@
   "main": "dev_mock.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "test:e2e": "e2e run"
+    "test:e2e": "e2e run",
+    "push:gas": "bash gas-push.sh"
   },
   "keywords": [],
   "author": "",

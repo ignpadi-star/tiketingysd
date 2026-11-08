@@ -91,12 +91,20 @@ Every semantic color needs text. Never use color as the only status signal.
 
 ### Runtime branding
 
-Settings may override `warna_utama` and `warna_aksen`. `applyTheme()` sets both modern tokens and compatibility aliases:
+Settings may override `warna_utama`, `warna_aksen`, and `warna_latar`. The first two accept a hex color (`#RRGGBB`) or a safe two-color linear gradient (`linear-gradient(<angle>deg, #RRGGBB, #RRGGBB)`); `warna_latar` accepts a hex color.
 
-- `--brand` and `--primary`
-- `--brand-accent` and `--accent`
+`applyColors()` applies the values and sets both modern tokens and compatibility aliases:
 
-Missing settings use safe defaults from `BOOT` or the default token values.
+- `--brand` and `--primary` hold the solid fallback color.
+- `--brand-accent` and `--accent` hold the solid accent fallback.
+- `--brand-paint` and `--accent-paint` hold the actual paint, solid or gradient.
+- `--brand-hover` and `--brand-hover-filter` handle gradient hover states.
+
+Public buttons use `--brand-paint`. The gate pass and public brand mark use `--accent-paint`. Gradients apply only to public pages; admin stays on solid brand colors. Missing settings use safe defaults from `BOOT` or the default token values.
+
+The whole public page follows the selected palette. `warna_latar` sets the base page background, while `applyColors()` tints `--surface`, `--surface-2`, `--surface-3`, `--line`, `--line-strong`, `--input-bg`, `--row-alt`, `--chip-bg`, and `--top-bg` from the primary color and the selected background. Buttons use the same primary paint, so button color and page theme stay in sync.
+
+Settings offers preset palettes (Gatehouse, Indigo, Emerald, Rose, Ocean, Violet) and gradient presets (Sunset, Aurora, Forest), plus custom start/end colors and angle.
 
 ## Typography
 

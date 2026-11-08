@@ -70,6 +70,7 @@ const DEFAULT_SETTINGS = {
   nama_organisasi: 'Panitia Kegiatan',
   warna_utama: '#1d4ed8',
   warna_aksen: '#f59e0b',
+  warna_latar: '#020617',
   kontak_panitia: '',
   logo_url: '',
   folder_poster_id: '',
@@ -95,7 +96,7 @@ const DEFAULT_SETTINGS = {
 };
 
 // Setting yang boleh diubah dari tampilan Super Admin
-const EDITABLE_SETTINGS = ['nama_organisasi', 'warna_utama', 'warna_aksen', 'kontak_panitia', 'logo_url', 'racepack_info', 'racepack_fields', 'racepack_fields_required',
+const EDITABLE_SETTINGS = ['nama_organisasi', 'warna_utama', 'warna_aksen', 'warna_latar', 'kontak_panitia', 'logo_url', 'racepack_info', 'racepack_fields', 'racepack_fields_required',
   'max_tiket_per_order', 'batas_bayar_jam', 'email_pengirim_nama', 'video_model', 'video_pakai_poster', 'musik_loop'];
 
 /* ============================== ROUTING API ============================== */
@@ -190,7 +191,7 @@ function doGet(e) {
     const t = HtmlService.createTemplateFromFile(isAdminPage ? 'Admin' : 'Index');
     const startEvent = !isAdminPage && e && e.parameter && /^[A-Za-z0-9-]{3,40}$/.test(e.parameter.event || '') ? e.parameter.event : '';
     t.boot = JSON.stringify({
-      org: st.nama_organisasi, warna: st.warna_utama, aksen: st.warna_aksen,
+      org: st.nama_organisasi, warna: st.warna_utama, aksen: st.warna_aksen, latar: st.warna_latar,
       logo: st.logo_url, kontak: st.kontak_panitia, url: ScriptApp.getService().getUrl() || '',
       maxQty: Number(st.max_tiket_per_order) || 10, startEvent: startEvent,
       musik: st.musik_url || '', musikLoop: String(st.musik_loop || '').toUpperCase() === 'YA', musikNama: st.musik_nama || ''
@@ -527,7 +528,12 @@ function settingsSave_(p) {
       else if (k === 'racepack_fields') val = normalizeRacepackFields_(v[k]);
       else val = clean_(v[k], 500);
       if (k === 'warna_utama' || k === 'warna_aksen') {
-        if (!/^#[0-9a-fA-F]{6}$/.test(val)) throw userErr_('Warna harus berformat #RRGGBB.');
+        const solid = /^#[0-9a-fA-F]{6}$/.test(val);
+        const grad = /^linear-gradient\(\s*\d{1,3}deg\s*,\s*#[0-9a-fA-F]{6}\s*,\s*#[0-9a-fA-F]{6}\s*\)$/i.test(val);
+        if (!solid && !grad) throw userErr_('Warna harus berformat #RRGGBB atau gradien linear dua warna.');
+      }
+      if (k === 'warna_latar' && !/^#[0-9a-fA-F]{6}$/.test(val)) {
+        throw userErr_('Warna latar harus berformat #RRGGBB.');
       }
       if (k === 'max_tiket_per_order') {
         val = String(Math.max(1, Math.min(50, parseInt(val, 10) || 10)));

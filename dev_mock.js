@@ -40,6 +40,9 @@
     ]),
     racepack_info: 'Ambil race pack di booth A dengan menunjukkan e-tiket.',
     nama_organisasi: 'Organisasi Demo',
+    warna_utama: '#1d4ed8',
+    warna_aksen: '#f59e0b',
+    warna_latar: '#020617',
     musik_url: '',
     musik_nama: '',
     musik_loop: 'TIDAK'

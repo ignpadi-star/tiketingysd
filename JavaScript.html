@@ -1069,19 +1069,20 @@ function viewEventForm() {
           h('label', { class: 'small' }, f.bgHapusHalaman, ' Hapus background halaman'),
           fld('Background tiket (JPG/PNG, maks 5 MB)', f.bgTiket), prevBgTiket,
           h('label', { class: 'small' }, f.bgHapusTiket, ' Hapus background tiket')),
-        h('div', { class: 'toolbar mt' },
-          h('button', { class: 'btn', onclick: save }, ev ? 'Simpan Perubahan' : 'Simpan Kegiatan'),
-          ev ? h('button', { class: 'btn sec', onclick: async function () {
-            const r = await act(function () { return call('event.toggleReg', { event_id: ev.event_id }); });
-            if (r) { toast('Pendaftaran ' + (r.status === 'AKTIF' ? 'dibuka' : 'ditutup') + '.', 'ok'); go('eventform', { id: ev.event_id }); }
-          } }, ev.status === 'AKTIF' ? 'Tutup Pendaftaran' : 'Buka Pendaftaran') : null,
-          ev ? h('button', {
+        h('div', { class: 'form-actions' },
+          h('div', { class: 'gap' },
+            h('button', { class: 'btn', onclick: save }, ev ? 'Simpan Perubahan' : 'Simpan Kegiatan'),
+            ev ? h('button', { class: 'btn sec', onclick: async function () {
+              const r = await act(function () { return call('event.toggleReg', { event_id: ev.event_id }); });
+              if (r) { toast('Pendaftaran ' + (r.status === 'AKTIF' ? 'dibuka' : 'ditutup') + '.', 'ok'); go('eventform', { id: ev.event_id }); }
+            } }, ev.status === 'AKTIF' ? 'Tutup Pendaftaran' : 'Buka Pendaftaran') : null),
+          ev ? h('div', { class: 'gap end' }, h('button', {
             class: 'btn bad', onclick: async function () {
               if (!(await confirmBox('Hapus kegiatan?', 'Kegiatan "' + ev.nama_kegiatan + '" dan jenis tiketnya akan dihapus. Tidak bisa dibatalkan.', 'Hapus', 'bad'))) return;
               const r = await act(function () { return call('event.delete', { event_id: ev.event_id }); });
               if (r) { toast('Kegiatan dihapus.', 'ok'); go('aevents'); }
             }
-          }, 'Hapus') : null)));
+          }, 'Hapus')) : null)));
 
     if (!ev) { wrap.appendChild(h('div', { class: 'alert info mt' }, 'Simpan kegiatan dulu, lalu tambahkan jenis tiket dan (opsional) video promo.')); return wrap; }
 
@@ -1265,12 +1266,37 @@ function racepackFields(evId, dataObj, rpFields) {
   }).filter(function (f) { return f.key; });
 }
 
+const THEME_PALETTES = [
+  { id: 'gatehouse', nama: 'Gatehouse', utama: '#1d4ed8', aksen: '#f59e0b', latar: '#020617', note: 'Biru + amber' },
+  { id: 'indigo', nama: 'Indigo', utama: '#4f46e5', aksen: '#f59e0b', latar: '#050318', note: 'Indigo + amber' },
+  { id: 'emerald', nama: 'Emerald', utama: '#059669', aksen: '#f59e0b', latar: '#02110c', note: 'Hijau + amber' },
+  { id: 'rose', nama: 'Rose', utama: '#e11d48', aksen: '#f59e0b', latar: '#12040a', note: 'Rose + amber' },
+  { id: 'ocean', nama: 'Ocean', utama: '#0d9488', aksen: '#38bdf8', latar: '#02100f', note: 'Teal + langit' },
+  { id: 'violet', nama: 'Violet', utama: '#7c3aed', aksen: '#ec4899', latar: '#0b0316', note: 'Ungu + pink' },
+  { id: 'sunset', nama: 'Sunset', gradient: true, dari: '#f97316', ke: '#db2777', angle: 135, aksen: '#f59e0b', latar: '#140604', note: 'Gradien oranye-pink' },
+  { id: 'aurora', nama: 'Aurora', gradient: true, dari: '#06b6d4', ke: '#8b5cf6', angle: 135, aksen: '#f59e0b', latar: '#040a14', note: 'Gradien cyan-ungu' },
+  { id: 'forest', nama: 'Forest', gradient: true, dari: '#065f46', ke: '#84cc16', angle: 120, aksen: '#f59e0b', latar: '#031006', note: 'Gradien hijau' }
+];
+const THEME_GRADIENT_RE = /^linear-gradient\(\s*(\d{1,3})deg\s*,\s*(#[0-9a-fA-F]{6})\s*,\s*(#[0-9a-fA-F]{6})\s*\)$/i;
+
+function themePaintParse(v, fallback) {
+  const s = String(v || '').trim();
+  const g = s.match(THEME_GRADIENT_RE);
+  if (g) return { gradient: true, angle: Number(g[1]) || 135, start: g[2], end: g[3], solid: g[2] };
+  const hex = /^#[0-9a-fA-F]{6}$/.test(s) ? s : (fallback || '#1d4ed8');
+  return { gradient: false, angle: 135, start: hex, end: hex, solid: hex };
+}
+
+function themePageTint(paint) {
+  const p = themePaintParse(paint, '#1d4ed8');
+  return p.gradient ? 'color-mix(in srgb, ' + p.start + ' 55%, ' + p.end + ')' : p.solid;
+}
+
 function viewSettings() {
   page(async function () {
     const v = await call('settings.get');
     const defs = [
       ['nama_organisasi', 'Nama organisasi', 'text'], ['kontak_panitia', 'Kontak panitia (tampil di email)', 'text'],
-      ['warna_utama', 'Warna utama', 'color'], ['warna_aksen', 'Warna aksen', 'color'],
       ['logo_url', 'URL logo (https, opsional)', 'text'], ['email_pengirim_nama', 'Nama pengirim email', 'text'],
       ['max_tiket_per_order', 'Maks tiket per pesanan', 'number'], ['batas_bayar_jam', 'Batas waktu bayar (jam)', 'number'],
       ['video_model', 'Model Veo', 'text'],
@@ -1282,10 +1308,97 @@ function viewSettings() {
         inputs[d[0]] = h('textarea', { rows: 4, value: v[d[0]] || '' });
         return fld(d[1], inputs[d[0]]);
       }
-      const colorDefault = d[0] === 'warna_aksen' ? (BOOT.aksen || '#f59e0b') : (BOOT.warna || '#1d4ed8');
-      inputs[d[0]] = h('input', { type: d[2], value: d[2] === 'color' ? (v[d[0]] || colorDefault) : (v[d[0]] || '') });
+      inputs[d[0]] = h('input', { type: d[2], value: v[d[0]] || '' });
       return fld(d[1], inputs[d[0]]);
     })));
+
+    /* ---------- Tema halaman publik ---------- */
+    const curUtama = themePaintParse(v.warna_utama || BOOT.warna, '#1d4ed8');
+    const curAksen = themePaintParse(v.warna_aksen || BOOT.aksen, '#f59e0b');
+    const curLatar = themePaintParse(v.warna_latar || BOOT.latar, '#020617');
+    const hiddenUtama = h('input', { type: 'hidden', value: '' });
+    const hiddenAksen = h('input', { type: 'hidden', value: '' });
+    const hiddenLatar = h('input', { type: 'hidden', value: '' });
+    inputs.warna_utama = hiddenUtama;
+    inputs.warna_aksen = hiddenAksen;
+    inputs.warna_latar = hiddenLatar;
+
+    const utamaStart = h('input', { type: 'color', value: curUtama.start });
+    const utamaEnd = h('input', { type: 'color', value: curUtama.end });
+    const accentPick = h('input', { type: 'color', value: curAksen.start });
+    const latarPick = h('input', { type: 'color', value: curLatar.start });
+    const gradAngle = h('input', { type: 'number', min: 0, max: 360, step: 1, value: String(curUtama.angle || 135) });
+    const useGrad = h('input', { type: 'checkbox' });
+    useGrad.checked = curUtama.gradient;
+
+    const gradFields = h('div', { class: 'theme-grid' },
+      fld('Warna akhir gradien', utamaEnd),
+      fld('Sudut gradien (0-360)', gradAngle));
+    const previewBar = h('div', { class: 'theme-preview-bar' });
+    const previewButton = h('button', { class: 'btn', type: 'button', tabindex: '-1' }, 'Tombol utama');
+    const preview = h('div', { class: 'theme-preview' }, previewBar,
+      h('div', { class: 'theme-preview-body' }, previewButton,
+        h('span', { class: 'small', style: 'color:#94a3b8' }, 'Pratinjau halaman publik')));
+
+    const paletteBtns = {};
+    function syncTheme() {
+      const rawAngle = parseInt(gradAngle.value, 10);
+      const ang = isNaN(rawAngle) ? 135 : Math.max(0, Math.min(360, rawAngle));
+      hiddenUtama.value = useGrad.checked
+        ? 'linear-gradient(' + ang + 'deg, ' + utamaStart.value + ', ' + utamaEnd.value + ')'
+        : utamaStart.value;
+      hiddenAksen.value = accentPick.value;
+      hiddenLatar.value = latarPick.value;
+      previewBar.style.background = hiddenUtama.value;
+      previewButton.style.background = hiddenUtama.value;
+      preview.style.background = hiddenLatar.value;
+      preview.style.color = '#e6edf7';
+      gradFields.classList.toggle('hidden', !useGrad.checked);
+      THEME_PALETTES.forEach(function (p) {
+        const btn = paletteBtns[p.id];
+        if (!btn) return;
+        const paint = p.gradient
+          ? 'linear-gradient(' + (p.angle || 135) + 'deg, ' + p.dari + ', ' + p.ke + ')'
+          : p.utama;
+        const match = paint === hiddenUtama.value && p.aksen === hiddenAksen.value && (p.latar || '#020617') === hiddenLatar.value;
+        btn.setAttribute('aria-pressed', match ? 'true' : 'false');
+      });
+    }
+    const paletteGrid = h('div', { class: 'palette-grid' }, THEME_PALETTES.map(function (p) {
+      const swatch = p.gradient ? 'linear-gradient(' + (p.angle || 135) + 'deg, ' + p.dari + ', ' + p.ke + ')' : p.utama;
+      const btn = h('button', {
+        class: 'palette', type: 'button', 'aria-pressed': 'false', onclick: function () {
+          if (p.gradient) {
+            useGrad.checked = true;
+            utamaStart.value = p.dari;
+            utamaEnd.value = p.ke;
+            gradAngle.value = String(p.angle || 135);
+          } else {
+            useGrad.checked = false;
+            utamaStart.value = p.utama;
+            utamaEnd.value = p.utama;
+          }
+          accentPick.value = p.aksen;
+          if (p.latar) latarPick.value = p.latar;
+          syncTheme();
+        }
+      }, h('span', { class: 'swatch', style: 'background:' + swatch }), h('span', { class: 'name' }, p.nama), h('span', { class: 'hint' }, p.note || ''));
+      paletteBtns[p.id] = btn;
+      return btn;
+    }));
+    [utamaStart, utamaEnd, accentPick, latarPick, gradAngle].forEach(function (el) {
+      el.addEventListener('input', syncTheme);
+    });
+    useGrad.addEventListener('change', syncTheme);
+    syncTheme();
+    form.appendChild(h('div', { class: 'form-section' },
+      h('div', { class: 'section-head' }, h('h3', null, 'Tema Halaman Publik')),
+      h('p', { class: 'muted small' }, 'Palet berlaku untuk landing page dan halaman pendaftaran. Pilih warna solid atau gradien, lalu sesuaikan warna latar dan aksen.'),
+      paletteGrid,
+      h('div', { class: 'theme-grid' }, fld('Warna utama', utamaStart), fld('Warna aksen', accentPick), fld('Warna latar halaman', latarPick)),
+      h('label', { class: 'small', style: 'display:inline-flex;align-items:center;gap:8px;margin:0 0 8px' }, useGrad, 'Gunakan gradien pada warna utama'),
+      gradFields,
+      preview));
 
     let fieldsArr = [];
     try {
@@ -1397,14 +1510,22 @@ function viewSettings() {
       fld('Ulangi lagu (looping)', inputs.musik_loop),
       h('div', { class: 'gap mt' }, musicUpload, musicDelete)));
 
-    form.appendChild(h('button', {
+    form.appendChild(h('div', { class: 'form-actions' }, h('button', {
       class: 'btn', onclick: async function () {
         const vals = {};
         Object.keys(inputs).forEach(function (k) { vals[k] = inputs[k] && inputs[k].value !== undefined ? inputs[k].value : inputs[k]; });
         const r = await act(function () { return call('settings.save', { values: vals }); });
-        if (r) toast('Pengaturan tersimpan. Muat ulang halaman untuk melihat warna/nama baru.', 'ok');
+        if (r) {
+          if (r.warna_utama) BOOT.warna = r.warna_utama;
+          if (r.warna_aksen) BOOT.aksen = r.warna_aksen;
+          if (r.warna_latar) BOOT.latar = r.warna_latar;
+          if (r.nama_organisasi) BOOT.org = r.nama_organisasi;
+          if (r.logo_url !== undefined) BOOT.logo = r.logo_url;
+          applyColors();
+          toast('Pengaturan tersimpan.', 'ok');
+        }
       }
-    }, 'Simpan Pengaturan'));
+    }, 'Simpan Pengaturan')));
     return h('div', null, h('h1', null, 'Pengaturan'),
       h('p', { class: 'lede' }, 'Identitas organisasi, warna tampilan, batas pemesanan, dan kolom data race pack.'),
       form,
@@ -1481,10 +1602,10 @@ async function viewRacePack() {
             h('td', null, x.diambil_oleh || '-'));
         })));
       openModal('Daftar Pembagian Race Pack', h('div', null,
-        h('div', { class: 'gap mb' },
+        table,
+        h('div', { class: 'toolbar mt noprint' },
           h('button', { class: 'btn sm', onclick: function () { window.print(); } }, 'Print'),
-          h('button', { class: 'btn sec sm', onclick: closeModal }, 'Tutup')),
-        table), { wide: true });
+          h('button', { class: 'btn sec sm', onclick: closeModal }, 'Tutup'))), { wide: true });
     }
     function exportCsv(rows) {
       const head = ['nama_peserta', 'email', 'nama_tiket', 'ticket_id', 'order_id', 'event_id', 'kegiatan', 'status', 'diambil_pada', 'diambil_oleh', 'data'];
@@ -1601,10 +1722,11 @@ async function viewRacePack() {
     render();
     if (!list.length) await showEmptyDiagnostic();
     return h('div', null,
-      pageHead('Race Pack', h('div', { class: 'gap' }, reloadBtn, printBtn, csvBtn, S.user.role === 'SUPER_ADMIN' ? rpToggleBtn : null)),
+      pageHead('Race Pack', h('div', { class: 'gap' }, reloadBtn, printBtn, csvBtn)),
       h('p', { class: 'lede' }, 'Peserta dari pesanan DITERIMA. Satu tiket menjadi satu baris pembagian race pack.'),
       h('div', { class: 'card mb' },
         h('div', { class: 'filter-grid' }, fld('Kegiatan', evSel), fld('Pencarian', q), fld('Status', stFilter)),
+        S.user.role === 'SUPER_ADMIN' ? h('div', { class: 'toolbar mt' }, rpToggleBtn) : null,
         h('div', { class: 'alert info mt' }, 'Klik "Serahkan" untuk mencatat pembagian race pack. Data peserta mengikuti isian saat pendaftaran.')),
       statsEl,
       box);
@@ -2033,16 +2155,59 @@ const VIEWS = {
   gate: viewGate, scanlog: viewScanLog, users: viewUsers, settings: viewSettings, racepack: viewRacePack
 };
 
+function applyColors() {
+  const utama = String(BOOT.warna || '').trim();
+  const aksen = String(BOOT.aksen || '').trim();
+  const u = themePaintParse(utama, '#1d4ed8');
+  const a = themePaintParse(aksen, '#f59e0b');
+  const isPublic = document.body.classList.contains('public-app');
+  const styles = [document.documentElement.style];
+  if (isPublic) styles.push(document.body.style);
+  const set = function (k, v) { styles.forEach(function (s) { s.setProperty(k, v); }); };
+  const del = function (k) { styles.forEach(function (s) { s.removeProperty(k); }); };
+
+  set('--brand', u.solid);
+  set('--primary', u.solid);
+  set('--brand-accent', a.solid);
+  set('--accent', a.solid);
+  if (u.gradient && isPublic) {
+    set('--brand-paint', utama);
+    set('--brand-hover', utama);
+    set('--brand-hover-filter', 'brightness(1.08)');
+  } else {
+    set('--brand-paint', u.solid);
+    del('--brand-hover');
+    del('--brand-hover-filter');
+  }
+  set('--accent-paint', a.gradient && isPublic ? aksen : a.solid);
+
+  if (!isPublic) return;
+
+  // Warna halaman publik: latar dari setting, permukaan diturunkan dari latar + warna utama.
+  const latarRaw = String(BOOT.latar || '').trim();
+  const latar = /^#[0-9a-fA-F]{6}$/.test(latarRaw) ? latarRaw : '#020617';
+  const tint = themePageTint(utama);
+  const lift = function (whitePct, tintPct) {
+    return 'color-mix(in srgb, #ffffff ' + whitePct + '%, color-mix(in srgb, ' + tint + ' ' + tintPct + '%, ' + latar + '))';
+  };
+  set('--bg', latar);
+  set('--surface', lift(6, 14));
+  set('--surface-2', lift(9, 18));
+  set('--surface-3', lift(13, 24));
+  set('--card', 'var(--surface)');
+  set('--soft', 'var(--surface-2)');
+  set('--secondary-surface', 'var(--surface-3)');
+  set('--line', lift(17, 28));
+  set('--line-strong', lift(24, 34));
+  set('--input-bg', lift(6, 16));
+  set('--input-border', lift(22, 30));
+  set('--row-alt', lift(8, 16));
+  set('--chip-bg', lift(12, 22));
+  set('--top-bg', lift(8, 16));
+}
+
 function applyTheme() {
-  const ok = function (c) { return /^#[0-9a-fA-F]{6}$/.test(c || ''); };
-  if (ok(BOOT.warna)) {
-    document.documentElement.style.setProperty('--brand', BOOT.warna);
-    document.documentElement.style.setProperty('--primary', BOOT.warna);
-  }
-  if (ok(BOOT.aksen)) {
-    document.documentElement.style.setProperty('--brand-accent', BOOT.aksen);
-    document.documentElement.style.setProperty('--accent', BOOT.aksen);
-  }
+  applyColors();
   const brand = $('#brand');
   const isAdmin = document.body.classList.contains('admin-app');
   if (BOOT.logo && /^https:\/\//i.test(BOOT.logo)) brand.appendChild(h('img', { src: BOOT.logo, alt: '', referrerpolicy: 'no-referrer', onerror: function (e) { e.target.remove(); } }));

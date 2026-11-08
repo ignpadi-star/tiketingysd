@@ -80,6 +80,7 @@ def compile_template(path, query=''):
         "url": "http://localhost:8500/Admin.html",
         "warna": "#1d4ed8",
         "aksen": "#f59e0b",
+        "latar": "#020617",
         "kontak": "panitia@example.com",
         "maxQty": 10,
         "startEvent": start_event,
