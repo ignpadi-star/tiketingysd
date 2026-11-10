@@ -149,16 +149,65 @@ function chipFor(status) {
   };
   return h('span', { class: 'chip ' + (m[status] || '') }, String(status).replace(/_/g, ' '));
 }
-function readFile(file) {
+/* Kompresi gambar di klien supaya Drive tidak cepat penuh.
+   Batas sisi terpanjang + kualitas JPEG bisa diatur per pemakaian. */
+const IMG_MAX_SIDE = 1600;
+const IMG_QUALITY = 0.85;
+
+function compressImage(file, maxSide, quality) {
+  maxSide = maxSide || IMG_MAX_SIDE;
+  quality = quality || IMG_QUALITY;
   return new Promise(function (res, rej) {
-    if (!file) return rej(new Error('Pilih file terlebih dahulu.'));
-    if (!/^image\/(jpeg|png)$/.test(file.type)) return rej(new Error('File harus berformat JPG atau PNG.'));
-    if (file.size > 5 * 1024 * 1024) return rej(new Error('Ukuran file maksimal 5 MB.'));
-    const r = new FileReader();
-    r.onload = function () { res({ name: file.name, mime: file.type, b64: String(r.result).split(',')[1] }); };
-    r.onerror = function () { rej(new Error('Gagal membaca file.')); };
-    r.readAsDataURL(file);
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = function () {
+      URL.revokeObjectURL(url);
+      const w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+      if (!w || !h) return rej(new Error('Gambar tidak dapat dibaca.'));
+      const skala = Math.min(1, maxSide / Math.max(w, h));
+      const cw = Math.max(1, Math.round(w * skala));
+      const ch = Math.max(1, Math.round(h * skala));
+      const cv = document.createElement('canvas');
+      cv.width = cw;
+      cv.height = ch;
+      const ctx = cv.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, cw, ch);
+      ctx.drawImage(img, 0, 0, cw, ch);
+      cv.toBlob(function (blob) {
+        if (!blob) return rej(new Error('Gagal mengompres gambar.'));
+        res(blob);
+      }, 'image/jpeg', quality);
+    };
+    img.onerror = function () { URL.revokeObjectURL(url); rej(new Error('Gambar tidak dapat dibaca.')); };
+    img.src = url;
   });
+}
+
+function blobToB64(blob) {
+  return new Promise(function (res, rej) {
+    const r = new FileReader();
+    r.onload = function () { res(String(r.result).split(',')[1]); };
+    r.onerror = function () { rej(new Error('Gagal membaca file.')); };
+    r.readAsDataURL(blob);
+  });
+}
+
+async function readFile(file, opts) {
+  if (!file) throw new Error('Pilih file terlebih dahulu.');
+  if (!/^image\/(jpeg|png)$/.test(file.type)) throw new Error('File harus berformat JPG atau PNG.');
+  if (file.size > 10 * 1024 * 1024) throw new Error('Ukuran file maksimal 10 MB.');
+  const o = opts || {};
+  let blob;
+  try {
+    blob = await compressImage(file, o.maxSide, o.quality);
+  } catch (e) {
+    blob = file;
+  }
+  // Jangan sampai hasil kompresi lebih besar dari file asli.
+  if (blob.size >= file.size) blob = file;
+  const b64 = await blobToB64(blob);
+  return { name: String(file.name || 'gambar').replace(/\.[^.]+$/, '') + '.jpg', mime: 'image/jpeg', b64: b64 };
 }
 function readAudio(file) {
   return new Promise(function (res, rej) {
@@ -659,7 +708,7 @@ function proofBox(orderId, kontak, onDone) {
       if (x) { toast('Bukti pembayaran terkirim.', 'ok'); if (onDone) onDone(x); }
     }
   }, 'Kirim Bukti Pembayaran');
-  return h('div', null, fld('Upload bukti pembayaran (JPG/PNG, maks 5 MB)', f), prev, btn);
+  return h('div', null, fld('Upload bukti pembayaran (JPG/PNG, maks 10 MB, otomatis dikompres)', f), prev, btn);
 }
 
 function viewOrdered() {
@@ -1033,10 +1082,10 @@ function viewEventForm() {
           lokasi: f.lokasi.value, status: f.status.value, deskripsi: f.desk.value, info_pembayaran: f.bayar.value,
           racepack_aktif: f.racepack.value
         };
-        if (f.poster.files[0]) { const fl = await readFile(f.poster.files[0]); p.poster = { b64: fl.b64, mime: fl.mime }; }
-        if (f.bgHalaman.files[0]) { const fl = await readFile(f.bgHalaman.files[0]); p.bg_halaman = { b64: fl.b64, mime: fl.mime }; }
+        if (f.poster.files[0]) { const fl = await readFile(f.poster.files[0], { maxSide: 1920, quality: 0.9 }); p.poster = { b64: fl.b64, mime: fl.mime }; }
+        if (f.bgHalaman.files[0]) { const fl = await readFile(f.bgHalaman.files[0], { maxSide: 1920, quality: 0.85 }); p.bg_halaman = { b64: fl.b64, mime: fl.mime }; }
         if (f.bgHapusHalaman.checked) p.bg_halaman_hapus = true;
-        if (f.bgTiket.files[0]) { const fl = await readFile(f.bgTiket.files[0]); p.bg_tiket = { b64: fl.b64, mime: fl.mime }; }
+        if (f.bgTiket.files[0]) { const fl = await readFile(f.bgTiket.files[0], { maxSide: 1920, quality: 0.85 }); p.bg_tiket = { b64: fl.b64, mime: fl.mime }; }
         if (f.bgHapusTiket.checked) p.bg_tiket_hapus = true;
         return call('event.save', p);
       });
