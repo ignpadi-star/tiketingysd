@@ -6,7 +6,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 # Deployment yang dipakai URL produksi. Ganti bila URL berubah.
-DEPLOYMENT_ID="${DEPLOYMENT_ID:-AKfycby0JWNlNvNQ819AD_zrhTAAffBBg0_LLfAH3WjXCNLzN3V-JCogCPTVYMuk98UMqvzo}"
+DEPLOYMENT_ID="${DEPLOYMENT_ID:-AKfycbwq7RPgy84niiUOBoyTsYZ08XrP7ySdhtbYs6C9gTEgn7ZiAS7YV331ZAvrMrLHKlqR}"
 DESCRIPTION="${1:-Update $(date '+%Y-%m-%d %H:%M')}"
 
 clasp push --force
