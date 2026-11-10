@@ -288,6 +288,18 @@ describe('admin', { tags: ['admin'] }, () => {
     await expect(screen.getByText(/Lagu aktif: lagu-uji.mp3/)).toBeVisible();
   });
 
+  test('pengaturan: palet tema publik termasuk kuning', async ({ app, screen, browser }) => {
+    await masukSebagai(browser, ADMIN);
+    await app.open('/Admin.html');
+    await menu(screen).getByRole('button', 'Pengaturan').tap();
+
+    await expect(screen.getByRole('heading', 'Tema Halaman Publik')).toBeVisible();
+    await expect(screen.getByRole('button', 'Kuning Kuning + biru')).toBeVisible();
+
+    await screen.getByRole('button', 'Kuning Kuning + biru').tap();
+    await expect(screen.getByRole('button', 'Kuning Kuning + biru')).toHaveAttribute('aria-pressed', 'true');
+  });
+
   test('pengaturan: unggah dan hapus gambar QRIS', async ({ app, screen, browser }) => {
     await masukSebagai(browser, ADMIN);
     await app.open('/Admin.html');

@@ -9,6 +9,7 @@
   --brand:#1d4ed8; --brand-accent:#f59e0b;
   --primary:var(--brand); --accent:var(--brand-accent);
   --brand-paint:var(--brand); --accent-paint:var(--brand-accent);
+  --on-brand:#fff;
   --brand-hover:var(--primary-hover); --brand-hover-filter:none;
   --primary-hover:color-mix(in srgb,var(--primary),#111);
   --bg:#eef1f7; --surface:#ffffff; --surface-2:#f8fafc; --surface-3:#e8edf7;
@@ -220,7 +221,7 @@ main.wrap{padding-top:28px;padding-bottom:64px;min-height:40vh}
 .admin-app .result-count{text-transform:uppercase;letter-spacing:.06em;font-size:.72rem}
 
 /* ---------- Tombol ---------- */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid transparent;border-radius:10px;background:var(--brand-paint,var(--primary));color:#fff;
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid transparent;border-radius:10px;background:var(--brand-paint,var(--primary));color:var(--on-brand,#fff);
   padding:10px 18px;font:inherit;font-size:.95rem;font-weight:700;cursor:pointer;text-decoration:none;min-height:44px;line-height:1.2;letter-spacing:.01em;
   transition:background .16s var(--ease),filter .16s var(--ease),transform .12s var(--ease),border-color .16s var(--ease);-webkit-tap-highlight-color:transparent}
 .btn:hover{background:var(--brand-hover,var(--primary-hover));filter:var(--brand-hover-filter,none);transform:translateY(-1px)}
@@ -229,8 +230,8 @@ main.wrap{padding-top:28px;padding-bottom:64px;min-height:40vh}
 .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
 .btn.sec{background:var(--secondary-surface);color:var(--ink);border-color:var(--line)}
 .btn.sec:hover{background:color-mix(in srgb,var(--primary) 9%,var(--secondary-surface));transform:translateY(-1px)}
-.btn.ok{background:var(--ok)} .btn.ok:hover{background:color-mix(in srgb,var(--ok),#111)}
-.btn.bad{background:var(--bad)} .btn.bad:hover{background:color-mix(in srgb,var(--bad),#111)}
+.btn.ok{background:var(--ok);color:#fff} .btn.ok:hover{background:color-mix(in srgb,var(--ok),#111)}
+.btn.bad{background:var(--bad);color:#fff} .btn.bad:hover{background:color-mix(in srgb,var(--bad),#111)}
 .btn.warn{background:var(--accent);color:#1a1203} .btn.warn:hover{background:color-mix(in srgb,var(--accent),#111)}
 .btn.ghost{background:transparent;color:var(--primary);border:1px solid var(--line)}
 .btn.ghost:hover{background:color-mix(in srgb,var(--primary) 10%,transparent);border-color:var(--primary);transform:none}
