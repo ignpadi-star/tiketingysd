@@ -45,7 +45,8 @@
     warna_latar: '#020617',
     musik_url: '',
     musik_nama: '',
-    musik_loop: 'TIDAK'
+    musik_loop: 'TIDAK',
+    qris_url: ''
   };
 
   var racepackRows = [
@@ -330,7 +331,12 @@
         settingsData.musik_url = 'mock://musik/' + encodeURIComponent(payload.musik.name);
         settingsData.musik_nama = payload.musik.name;
       }
-      return { ok: true };
+      if (payload.qris_hapus) {
+        settingsData.qris_url = '';
+      } else if (payload.qris && payload.qris.name) {
+        settingsData.qris_url = 'mock://qris/' + encodeURIComponent(payload.qris.name);
+      }
+      return clone(settingsData);
     }
     if (action === 'report.export') {
       if (payload.jenis === 'attendance' && payload.format === 'json') {

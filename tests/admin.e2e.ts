@@ -288,6 +288,21 @@ describe('admin', { tags: ['admin'] }, () => {
     await expect(screen.getByText(/Lagu aktif: lagu-uji.mp3/)).toBeVisible();
   });
 
+  test('pengaturan: unggah dan hapus gambar QRIS', async ({ app, screen, browser }) => {
+    await masukSebagai(browser, ADMIN);
+    await app.open('/Admin.html');
+    await menu(screen).getByRole('button', 'Pengaturan').tap();
+
+    await expect(screen.getByRole('heading', 'QRIS Pembayaran')).toBeVisible();
+    await expect(screen.getByText('Belum ada gambar QRIS.')).toBeVisible();
+
+    await screen.getByLabel('Unggah gambar QRIS').setInputFiles('tests/fixtures/qris-uji.png');
+    await screen.getByRole('button', 'Unggah Gambar QRIS').tap();
+
+    await expect(screen.getByText('Gambar QRIS tersimpan.')).toBeVisible();
+    await expect(screen.getByText('Gambar QRIS aktif.')).toBeVisible();
+  });
+
   test('staf: menu terbatas dan aksi verifikasi tersembunyi', async ({ app, screen, browser }) => {
     await masukSebagai(browser, STAF);
     await app.open('/Admin.html');

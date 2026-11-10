@@ -47,8 +47,22 @@ describe('publik', { tags: ['public'] }, () => {
     await expect(screen.getByText('Rp250.000')).toBeVisible();
   });
 
-  test('pesan 3 tiket membuat 3 kartu peserta', async ({ app, screen }) => {
-    await app.open('/Index.html');
+  test('QRIS tampil di halaman pembayaran', async ({ app, screen }) => {
+    await app.open('/Index.html?qris=/tests/fixtures/qris-uji.png');
+    await screen.getByRole('button', 'Beli Tiket').first().tap();
+
+    await screen.getByText('VIP').first().tap();
+    await screen.getByLabel('Nama pembeli').fill('Pembeli QRIS');
+    await screen.getByLabel('Email (e-tiket dikirim ke sini)').fill('qris.uji@example.com');
+    await screen.getByLabel('Nama peserta').fill('Peserta QRIS');
+    await screen.getByRole('button', 'Pesan Sekarang').tap();
+
+    await expect(screen.getByText('Petunjuk Pembayaran')).toBeVisible();
+    await expect(screen.getByText('Scan QRIS untuk membayar')).toBeVisible();
+    await expect(screen.getByRole('img', 'Kode QRIS pembayaran')).toBeVisible();
+  });
+
+  test('pesan 3 tiket membuat 3 kartu peserta', async ({ app, screen }) => {    await app.open('/Index.html');
     await screen.getByRole('button', 'Beli Tiket').first().tap();
 
     await screen.getByText('Reguler', { exact: true }).first().tap();

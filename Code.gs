@@ -12,7 +12,7 @@
 
 const ROLES = ['SUPER_ADMIN', 'VERIFIKATOR', 'GATE', 'STAF'];
 const EVENT_STATUS = ['DRAFT', 'AKTIF', 'SELESAI', 'DITUTUP'];
-const MAX_IMG_MB = 5;
+const MAX_IMG_MB = 10;
 const SESSION_TTL = 21600; // 6 jam (batas maksimum CacheService)
 
 // num = kolom bertipe angka; kolom lain disimpan sebagai TEKS (menjaga 08xx, tanggal, jam, dll.)
@@ -77,6 +77,9 @@ const DEFAULT_SETTINGS = {
   folder_bukti_id: '',
   folder_video_id: '',
   folder_musik_id: '',
+  folder_qris_id: '',
+  qris_url: '',
+  qris_file_id: '',
   musik_url: '',
   musik_file_id: '',
   musik_nama: '',
@@ -96,7 +99,7 @@ const DEFAULT_SETTINGS = {
 };
 
 // Setting yang boleh diubah dari tampilan Super Admin
-const EDITABLE_SETTINGS = ['nama_organisasi', 'warna_utama', 'warna_aksen', 'warna_latar', 'kontak_panitia', 'logo_url', 'racepack_info', 'racepack_fields', 'racepack_fields_required',
+const EDITABLE_SETTINGS = ['nama_organisasi', 'warna_utama', 'warna_aksen', 'warna_latar', 'kontak_panitia', 'logo_url', 'qris_url', 'racepack_info', 'racepack_fields', 'racepack_fields_required',
   'max_tiket_per_order', 'batas_bayar_jam', 'email_pengirim_nama', 'video_model', 'video_pakai_poster', 'musik_loop'];
 
 /* ============================== ROUTING API ============================== */
@@ -192,7 +195,7 @@ function doGet(e) {
     const startEvent = !isAdminPage && e && e.parameter && /^[A-Za-z0-9-]{3,40}$/.test(e.parameter.event || '') ? e.parameter.event : '';
     t.boot = JSON.stringify({
       org: st.nama_organisasi, warna: st.warna_utama, aksen: st.warna_aksen, latar: st.warna_latar,
-      logo: st.logo_url, kontak: st.kontak_panitia, url: ScriptApp.getService().getUrl() || '',
+      logo: st.logo_url, qris: st.qris_url || '', kontak: st.kontak_panitia, url: ScriptApp.getService().getUrl() || '',
       maxQty: Number(st.max_tiket_per_order) || 10, startEvent: startEvent,
       musik: st.musik_url || '', musikLoop: String(st.musik_loop || '').toUpperCase() === 'YA', musikNama: st.musik_nama || ''
     }).replace(/</g, '\\u003c');
@@ -544,11 +547,34 @@ function settingsSave_(p) {
       if (k === 'video_pakai_poster') val = val === 'YA' ? 'YA' : 'TIDAK';
       if (k === 'musik_loop') val = val === 'YA' ? 'YA' : 'TIDAK';
       if (k === 'logo_url' && val && !/^https:\/\//i.test(val)) throw userErr_('URL logo harus diawali https://');
+      if (k === 'qris_url' && val && !/^https:\/\//i.test(val)) throw userErr_('URL gambar QRIS harus diawali https://');
       setSetting_(k, val);
     });
+    applyQris_(p);
     applyMusic_(p);
     return settingsGet_();
   });
+}
+
+/** Simpan / hapus gambar QRIS pembayaran (khusus administrator). */
+function applyQris_(p) {
+  const st = settings_();
+  if (p.qris_hapus) {
+    if (st.qris_file_id) { try { DriveApp.getFileById(st.qris_file_id).setTrashed(true); } catch (e) { /* abaikan */ } }
+    setSetting_('qris_url', '');
+    setSetting_('qris_file_id', '');
+    return;
+  }
+  if (!p.qris || !p.qris.b64) return;
+  const blob = decodeImage_(p.qris.b64, p.qris.mime, 'qris-' + Date.now(), 'gambar QRIS');
+  let folder;
+  try { folder = DriveApp.getFolderById(st.folder_qris_id); }
+  catch (e) { folder = DriveApp.createFolder('Tiket - QRIS'); setSetting_('folder_qris_id', folder.getId()); }
+  const file = folder.createFile(blob);
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  if (st.qris_file_id) { try { DriveApp.getFileById(st.qris_file_id).setTrashed(true); } catch (e) { /* abaikan */ } }
+  setSetting_('qris_file_id', file.getId());
+  setSetting_('qris_url', 'https://drive.google.com/thumbnail?id=' + file.getId() + '&sz=w1200');
 }
 
 /** Simpan / hapus lagu landing page. Sumber bisa URL GitHub (raw) atau file unggahan Drive. */

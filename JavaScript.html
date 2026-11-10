@@ -207,7 +207,30 @@ async function readFile(file, opts) {
   // Jangan sampai hasil kompresi lebih besar dari file asli.
   if (blob.size >= file.size) blob = file;
   const b64 = await blobToB64(blob);
-  return { name: String(file.name || 'gambar').replace(/\.[^.]+$/, '') + '.jpg', mime: 'image/jpeg', b64: b64 };
+  const isCompressed = blob !== file;
+  const mime = isCompressed ? 'image/jpeg' : file.type;
+  const ext = mime === 'image/png' ? '.png' : '.jpg';
+  const name = String(file.name || 'gambar').replace(/\.[^.]+$/, '') + ext;
+  return { name: name, mime: mime, b64: b64 };
+}
+function readFileRaw(file) {
+  return new Promise(function (res, rej) {
+    if (!file) return rej(new Error('Pilih file terlebih dahulu.'));
+    if (!/^image\/(jpeg|png)$/.test(file.type)) return rej(new Error('File harus berformat JPG atau PNG.'));
+    if (file.size > 5 * 1024 * 1024) return rej(new Error('Ukuran file maksimal 5 MB.'));
+    const r = new FileReader();
+    r.onload = function () { res({ name: file.name, mime: file.type, b64: String(r.result).split(',')[1] }); };
+    r.onerror = function () { rej(new Error('Gagal membaca file.')); };
+    r.readAsDataURL(file);
+  });
+}
+function qrisBox() {
+  if (!BOOT.qris) return null;
+  return h('div', { class: 'qris-box mt' },
+    h('div', { class: 'label' }, 'Scan QRIS untuk membayar'),
+    h('a', { href: BOOT.qris, target: '_blank', rel: 'noopener' },
+      h('img', { class: 'qris-img', src: BOOT.qris, alt: 'Kode QRIS pembayaran', loading: 'lazy' })),
+    h('p', { class: 'muted small' }, 'Buka gambar untuk memperbesar. Setelah membayar, unggah bukti pembayaran di halaman ini.'));
 }
 function readAudio(file) {
   return new Promise(function (res, rej) {
@@ -738,6 +761,7 @@ function viewOrdered() {
     gratis ? null : h('div', { class: 'mt' },
       h('h3', null, 'Petunjuk Pembayaran'),
       h('div', { class: 'payinfo pre' }, o.info_pembayaran || 'Hubungi panitia untuk informasi pembayaran.'),
+      qrisBox(),
       h('p', { class: 'muted small' }, 'Selesaikan pembayaran dalam ' + o.batas_bayar_jam + ' jam, atau pesanan dibatalkan otomatis.')),
     o.racepack_info ? h('div', { class: 'alert info mt' }, h('b', null, 'Race Pack'), h('div', { class: 'pre' }, o.racepack_info)) : null,
     h('div', { class: 'mt' }, proofArea)));
@@ -770,6 +794,8 @@ function statusResult(r, kontak, refresh) {
   if (r.status === 'MENUNGGU_BAYAR') {
     wrap.appendChild(h('div', { class: 'alert' }, 'Menunggu pembayaran. Lakukan pembayaran lalu upload bukti.'));
     wrap.appendChild(h('div', { class: 'payinfo pre' }, r.info_pembayaran || 'Hubungi panitia untuk informasi pembayaran.'));
+    const qb = qrisBox();
+    if (qb) wrap.appendChild(qb);
     wrap.appendChild(h('div', { class: 'mt' }, proofBox(r.order_id, kontak, refresh)));
   } else if (r.status === 'MENUNGGU_VERIFIKASI') {
     wrap.appendChild(h('div', { class: 'alert info' }, 'Bukti pembayaran sudah diterima dan sedang diverifikasi panitia. Cek lagi nanti atau tunggu email e-tiket.'));
@@ -1502,6 +1528,52 @@ function viewSettings() {
 
     inputs.video_pakai_poster = sel([['YA', 'Ya, kirim poster ke Veo'], ['TIDAK', 'Tidak (teks saja)']], v.video_pakai_poster);
     form.appendChild(fld('Poster untuk video promo', inputs.video_pakai_poster));
+
+    /* ---------- QRIS pembayaran ---------- */
+    const qrisFile = h('input', { type: 'file', accept: 'image/jpeg,image/png' });
+    const qrisStatus = h('div', { class: 'alert info' }, v.qris_url ? 'Gambar QRIS aktif.' : 'Belum ada gambar QRIS.');
+    const qrisPreviewWrap = h('div', { class: 'mt' });
+    const renderQrisPreview = function (url) {
+      qrisPreviewWrap.innerHTML = '';
+      if (url) qrisPreviewWrap.appendChild(h('img', { class: 'qris-preview', src: url, alt: 'Pratinjau gambar QRIS' }));
+    };
+    renderQrisPreview(v.qris_url || '');
+    const qrisUpload = h('button', {
+      class: 'btn', type: 'button', onclick: async function () {
+        const f = qrisFile.files[0];
+        if (!f) return toast('Pilih gambar QRIS terlebih dahulu.', 'err');
+        const r = await act(async function () {
+          const img = await readFileRaw(f);
+          return call('settings.save', { values: {}, qris: img });
+        });
+        if (r) {
+          qrisStatus.textContent = 'Gambar QRIS aktif.';
+          renderQrisPreview((r && r.qris_url) || '');
+          qrisDelete.disabled = !(r && r.qris_url);
+          toast('Gambar QRIS tersimpan.', 'ok');
+        }
+      }
+    }, 'Unggah Gambar QRIS');
+    const qrisDelete = h('button', {
+      class: 'btn bad', type: 'button', disabled: !v.qris_url, onclick: async function () {
+        if (!(await confirmBox('Hapus gambar QRIS?', 'Gambar QRIS tidak lagi tampil di halaman pembayaran.', 'Hapus QRIS', 'bad'))) return;
+        const r = await act(function () { return call('settings.save', { values: {}, qris_hapus: true }); });
+        if (r) {
+          qrisStatus.textContent = 'Belum ada gambar QRIS.';
+          renderQrisPreview('');
+          qrisDelete.disabled = true;
+          qrisFile.value = '';
+          toast('Gambar QRIS dihapus.', 'ok');
+        }
+      }
+    }, 'Hapus QRIS');
+    form.appendChild(h('div', { class: 'form-section' },
+      h('div', { class: 'section-head' }, h('h3', null, 'QRIS Pembayaran')),
+      h('p', { class: 'muted small' }, 'Gambar QRIS tampil di halaman pembayaran pembeli, di bawah petunjuk pembayaran. Unggah gambar asli dari aplikasi bank atau merchant (JPG/PNG, maksimal 5 MB). Gambar tidak dikompres agar kode QR tetap tajam.'),
+      qrisStatus,
+      qrisPreviewWrap,
+      fld('Unggah gambar QRIS', qrisFile),
+      h('div', { class: 'mt gap' }, qrisUpload, qrisDelete)));
 
     inputs.musik_loop = sel([['TIDAK', 'Tidak (putar sekali)'], ['YA', 'Ya (ulang terus)']], v.musik_loop === 'YA' ? 'YA' : 'TIDAK');
     const musicUrl = h('input', { type: 'url', maxlength: 500, placeholder: 'https://raw.githubusercontent.com/.../lagu.mp3', value: v.musik_url || '' });

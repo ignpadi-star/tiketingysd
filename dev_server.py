@@ -87,6 +87,7 @@ def compile_template(path, query=''):
         "musik": musik,
         "musikLoop": bool(musik),
         "musikNama": musik_nama,
+        "qris": qs.get('qris', [''])[0],
         "debug": True
     }
     content = BOOT_RE.sub(json.dumps(mock_boot), content)
