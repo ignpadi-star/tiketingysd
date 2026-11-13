@@ -237,12 +237,16 @@ describe('admin', { tags: ['admin'] }, () => {
     await expect(screen.getByRole('heading', 'Jenis Kendaraan')).toBeVisible();
 
     await screen.getByLabel('Daftar jenis kendaraan (satu per baris)').fill('Motor\nMobil\nBus');
-    await screen.getByLabel('Kewajiban menjawab').selectOption('Wajib dipilih');
+    await screen.getByLabel('Kewajiban memilih jenis kendaraan').selectOption('Wajib dipilih');
+    await screen.getByLabel('Tampilkan isian nomor polisi').selectOption('Tampilkan isian');
+    await screen.getByLabel('Kewajiban nomor polisi').selectOption('Wajib diisi');
     await screen.getByRole('button', 'Simpan Pengaturan').tap();
 
     await expect(screen.getByText('Pengaturan tersimpan.')).toBeVisible();
     await expect(screen.getByLabel('Daftar jenis kendaraan (satu per baris)')).toHaveValue('Motor\nMobil\nBus');
-    await expect(screen.getByLabel('Kewajiban menjawab')).toHaveValue('YA');
+    await expect(screen.getByLabel('Kewajiban memilih jenis kendaraan')).toHaveValue('YA');
+    await expect(screen.getByLabel('Tampilkan isian nomor polisi')).toHaveValue('YA');
+    await expect(screen.getByLabel('Kewajiban nomor polisi')).toHaveValue('YA');
   });
 
   test('pesanan: kartu menampilkan jenis kendaraan', async ({ app, screen, browser }) => {
@@ -255,6 +259,10 @@ describe('admin', { tags: ['admin'] }, () => {
 
     await expect(screen.getByText('Kendaraan')).toBeVisible();
     await expect(screen.getByText('Mobil')).toBeVisible();
+    await expect(screen.getByText('Nomor polisi')).toBeVisible();
+    await expect(screen.getByText('B 1234 XYZ')).toBeVisible();
+    await expect(screen.getByText('Nomor kendaraan')).toBeVisible();
+    await expect(screen.getByText('Rangka 5678')).toBeVisible();
   });
 
   test('pengaturan: simpan dan terbaca kembali', async ({ app, screen, browser }) => {
@@ -343,6 +351,15 @@ describe('admin', { tags: ['admin'] }, () => {
 
     await screen.getByRole('button', 'Kuning Kuning + biru').tap();
     await expect(screen.getByRole('button', 'Kuning Kuning + biru')).toHaveAttribute('aria-pressed', 'true');
+
+    await expect(screen.getByLabel('Warna area (header & kartu)')).toBeVisible();
+    const areaAuto = screen.getByLabel('Warna area otomatis dari warna utama');
+    await expect(areaAuto).toBeChecked();
+    await areaAuto.uncheck();
+    await screen.getByLabel('Warna area (header & kartu)').fill('#f8d7da');
+    await screen.getByRole('button', 'Simpan Pengaturan').tap();
+    await expect(screen.getByText('Pengaturan tersimpan.')).toBeVisible();
+    await expect(screen.getByLabel('Warna area (header & kartu)')).toHaveValue('#f8d7da');
   });
 
   test('pengaturan: unggah dan hapus gambar QRIS', async ({ app, screen, browser }) => {

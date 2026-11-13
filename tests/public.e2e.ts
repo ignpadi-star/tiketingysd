@@ -57,12 +57,14 @@ describe('publik', { tags: ['public'] }, () => {
   });
 
   test('jenis kendaraan wajib dipilih sebelum memesan', async ({ app, screen }) => {
-    await app.open('/Index.html?kendaraan=Motor%7CMobil%7CBus&kendaraanWajib=1');
+    await app.open('/Index.html?kendaraan=Motor%7CMobil%7CBus&kendaraanWajib=1&nopol=1&nopolWajib=1&nomor=1&nomorWajib=1');
     await screen.getByRole('button', 'Beli Tiket').first().tap();
     await screen.getByText('VIP').first().tap();
 
     await expect(screen.getByRole('heading', 'Kendaraan')).toBeVisible();
     await expect(screen.getByLabel('Jenis kendaraan')).toBeVisible();
+    await expect(screen.getByLabel('Nomor polisi')).toBeVisible();
+    await expect(screen.getByLabel('Nomor kendaraan')).toBeVisible();
 
     await screen.getByLabel('Nama pembeli').fill('Pembeli Kendaraan');
     await screen.getByLabel('Email (e-tiket dikirim ke sini)').fill('kendaraan.uji@example.com');
@@ -71,6 +73,14 @@ describe('publik', { tags: ['public'] }, () => {
     await expect(screen.getByText('Jenis kendaraan wajib dipilih.')).toBeVisible();
 
     await screen.getByLabel('Jenis kendaraan').selectOption('Mobil');
+    await screen.getByRole('button', 'Pesan Sekarang').tap();
+    await expect(screen.getByText('Nomor polisi wajib diisi.')).toBeVisible();
+
+    await screen.getByLabel('Nomor polisi').fill('b 1234 xyz');
+    await screen.getByRole('button', 'Pesan Sekarang').tap();
+    await expect(screen.getByText('Nomor kendaraan wajib diisi.')).toBeVisible();
+
+    await screen.getByLabel('Nomor kendaraan').fill('Rangka 5678');
     await screen.getByRole('button', 'Pesan Sekarang').tap();
     await expect(screen.getByText('Pesanan berhasil dibuat. Simpan ID pembelian di bawah ini.')).toBeVisible();
   });

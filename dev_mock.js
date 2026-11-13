@@ -48,7 +48,12 @@
     musik_loop: 'TIDAK',
     qris_url: '',
     kendaraan_opsi: '',
-    kendaraan_wajib: 'TIDAK'
+    kendaraan_wajib: 'TIDAK',
+    nopol_aktif: 'TIDAK',
+    nopol_wajib: 'TIDAK',
+    nomor_kendaraan_aktif: 'TIDAK',
+    nomor_kendaraan_wajib: 'TIDAK',
+    warna_area: ''
   };
 
   var racepackRows = [
@@ -82,6 +87,7 @@
       nama_pembeli: 'Budi Santoso', email: 'budi@example.com', no_hp: '08123456789',
       jumlah: 2, total_harga: 300000, status: 'DITERIMA', catatan: '', dibuat_pada: '2026-10-27 09:00:00',
       jenis_kendaraan: 'Mobil',
+      nomor_polisi: 'B 1234 XYZ', nomor_kendaraan: 'Rangka 5678',
       diverifikasi_oleh: 'Admin', diverifikasi_pada: '2026-10-27 09:30:00', ada_bukti: true
     },
     {
@@ -191,10 +197,20 @@
         if (kJenis && kOpsi.indexOf(kJenis) < 0) return fail('Jenis kendaraan tidak valid.');
         if (!kJenis && kWajibCfg) return fail('Jenis kendaraan wajib dipilih.');
       }
+      var kCfg = (typeof BOOT !== 'undefined' && BOOT.kendaraan) ? BOOT.kendaraan : {};
+      var nopolAktif = String(settingsData.nopol_aktif || '').toUpperCase() === 'YA' || !!kCfg.nopolAktif;
+      var nopolWajib = String(settingsData.nopol_wajib || '').toUpperCase() === 'YA' || !!kCfg.nopolWajib;
+      var nomorAktif = String(settingsData.nomor_kendaraan_aktif || '').toUpperCase() === 'YA' || !!kCfg.nomorAktif;
+      var nomorWajib = String(settingsData.nomor_kendaraan_wajib || '').toUpperCase() === 'YA' || !!kCfg.nomorWajib;
+      var nopol = nopolAktif ? String(payload.nomor_polisi || '').trim().toUpperCase() : '';
+      var nomorKend = nomorAktif ? String(payload.nomor_kendaraan || '').trim() : '';
+      if (nopolAktif && !nopol && nopolWajib) return fail('Nomor polisi wajib diisi.');
+      if (nomorAktif && !nomorKend && nomorWajib) return fail('Nomor kendaraan wajib diisi.');
       return {
         order_id: 'TKT-DEMO-NEW', total_harga: t.harga * paket, jumlah: qty, paket: paket, isi_tiket: isi, status: 'MENUNGGU_BAYAR',
         nama_kegiatan: ev2.nama_kegiatan, nama_tiket: t.nama_tiket, info_pembayaran: 'Transfer BCA 123',
         jenis_kendaraan: kJenis,
+        nomor_polisi: nopol, nomor_kendaraan: nomorKend,
         batas_bayar_jam: 24, racepack_info: 'Ambil race pack di booth A.'
       };
     }

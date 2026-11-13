@@ -576,6 +576,9 @@ function viewEvent() {
     const kendaraanInp = kendaraanOpsi.length
       ? sel([['', kendaraanCfg.wajib ? 'Pilih jenis kendaraan' : 'Tidak diisi']].concat(kendaraanOpsi.map(function (x) { return [x, x]; })), '')
       : null;
+    const nopolInp = kendaraanCfg.nopolAktif ? h('input', { type: 'text', maxlength: 20, placeholder: 'B 1234 XYZ' }) : null;
+    const nomorInp = kendaraanCfg.nomorAktif ? h('input', { type: 'text', maxlength: 40, placeholder: 'Nomor rangka / nomor mesin' }) : null;
+    const adaKendaraan = !!(kendaraanInp || nopolInp || nomorInp);
 
     const rpFields = (e.racepack_fields || []).filter(function (f) { return f.key !== 'nama_pemegang'; });
     const pesertaBox = h('div');
@@ -660,6 +663,8 @@ function viewEvent() {
         event_id: e.event_id, type_id: selType, nama: nm.value, email: em.value, no_hp: hp.value,
         jumlah: jumlah, paket: paket,
         jenis_kendaraan: kendaraanInp ? kendaraanInp.value : '',
+        nomor_polisi: nopolInp ? nopolInp.value : '',
+        nomor_kendaraan: nomorInp ? nomorInp.value : '',
         peserta: pesertaInputs.map(function (p) {
           const data = {};
           Object.keys(p.fields).forEach(function (k) { data[k] = p.fields[k].value; });
@@ -680,9 +685,11 @@ function viewEvent() {
         h('div', { class: 'section-head' }, h('h3', null, 'Data pembeli')),
         h('div', { class: 'row2' }, fld(qtyLabel, qtyIn, qtyHint), fld('Nama pembeli', nm)),
         h('div', { class: 'row2' }, fld('Email (e-tiket dikirim ke sini)', em), fld('No. HP / WhatsApp', hp, 'Boleh dikosongkan jika diisi pada data peserta.'))),
-      kendaraanInp ? h('div', { class: 'form-section' },
+      adaKendaraan ? h('div', { class: 'form-section' },
         h('div', { class: 'section-head' }, h('h3', null, 'Kendaraan')),
-        fld('Jenis kendaraan', kendaraanInp, kendaraanCfg.wajib ? 'Wajib dipilih sebelum memesan.' : 'Pilih kendaraan yang akan digunakan saat datang ke lokasi.')) : null,
+        kendaraanInp ? fld('Jenis kendaraan', kendaraanInp, kendaraanCfg.wajib ? 'Wajib dipilih sebelum memesan.' : 'Pilih kendaraan yang akan digunakan saat datang ke lokasi.') : null,
+        nopolInp ? fld('Nomor polisi', nopolInp, kendaraanCfg.nopolWajib ? 'Wajib diisi.' : 'Boleh dikosongkan.') : null,
+        nomorInp ? fld('Nomor kendaraan', nomorInp, kendaraanCfg.nomorWajib ? 'Wajib diisi.' : 'Boleh dikosongkan.') : null) : null,
       h('div', { class: 'form-section' },
         h('div', { class: 'section-head' }, h('h3', null, 'Data peserta'),
           e.racepack_aktif ? h('span', { class: 'muted small' }, 'Dipakai untuk race pack') : null),
@@ -1404,17 +1411,35 @@ function themePageTint(paint) {
   return p.gradient ? 'color-mix(in srgb, ' + p.start + ' 55%, ' + p.end + ')' : p.solid;
 }
 
-/** Teks di atas tombol: hitam di warna terang (mis. kuning), putih di warna gelap. */
-function themeInkOn(hex) {
+/** Luminansi relatif dari warna hex (0 = gelap, 1 = terang). */
+function themeLum(hex) {
   const m = /^#([0-9a-fA-F]{6})$/.exec(String(hex || ''));
-  if (!m) return '#ffffff';
+  if (!m) return 0;
   const n = parseInt(m[1], 16);
   const lin = function (c) {
     c = c / 255;
     return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
   };
-  const L = 0.2126 * lin((n >> 16) & 255) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255);
-  return L > 0.35 ? '#0b1220' : '#ffffff';
+  return 0.2126 * lin((n >> 16) & 255) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255);
+}
+
+/** Campur dua warna hex; pctA = persentase warna pertama. */
+function themeHexMix(a, b, pctA) {
+  const fix = function (h) { return /^#[0-9a-fA-F]{6}$/.test(h) ? h : '#000000'; };
+  const x = fix(a).slice(1), y = fix(b).slice(1), p = Math.max(0, Math.min(100, pctA)) / 100;
+  let out = '#';
+  for (let i = 0; i < 6; i += 2) {
+    const av = parseInt(x.slice(i, i + 2), 16), bv = parseInt(y.slice(i, i + 2), 16);
+    const n = Math.round(av * p + bv * (1 - p));
+    out += n.toString(16).padStart(2, '0');
+  }
+  return out;
+}
+
+/** Teks di atas tombol: hitam di warna terang (mis. kuning), putih di warna gelap. */
+function themeInkOn(hex) {
+  if (!/^#[0-9a-fA-F]{6}$/.test(String(hex || ''))) return '#ffffff';
+  return themeLum(hex) > 0.35 ? '#0b1220' : '#ffffff';
 }
 
 /** Warna tengah dua hex, dipakai untuk memilih warna teks pada tombol gradien. */
@@ -1470,6 +1495,11 @@ function viewSettings() {
     const utamaEnd = h('input', { type: 'color', value: curUtama.end });
     const accentPick = h('input', { type: 'color', value: curAksen.start });
     const latarPick = h('input', { type: 'color', value: curLatar.start });
+    const areaPick = h('input', { type: 'color', value: /^#[0-9a-fA-F]{6}$/.test(v.warna_area || '') ? v.warna_area : curUtama.start });
+    const areaAuto = h('input', { type: 'checkbox' });
+    areaAuto.checked = !/^#[0-9a-fA-F]{6}$/.test(v.warna_area || '');
+    const hiddenArea = h('input', { type: 'hidden', value: '' });
+    inputs.warna_area = hiddenArea;
     const gradAngle = h('input', { type: 'number', min: 0, max: 360, step: 1, value: String(curUtama.angle || 135) });
     const useGrad = h('input', { type: 'checkbox' });
     useGrad.checked = curUtama.gradient;
@@ -1492,11 +1522,16 @@ function viewSettings() {
         : utamaStart.value;
       hiddenAksen.value = accentPick.value;
       hiddenLatar.value = latarPick.value;
-      previewBar.style.background = hiddenUtama.value;
+      hiddenArea.value = areaAuto.checked ? '' : areaPick.value;
+      previewBar.style.background = hiddenArea.value || hiddenUtama.value;
       previewButton.style.background = hiddenUtama.value;
       previewButton.style.color = themeInkForPaint(hiddenUtama.value);
       preview.style.background = hiddenLatar.value;
-      preview.style.color = '#e6edf7';
+      const prevArea = hiddenArea.value || themeHexMix(themePaintParse(hiddenUtama.value, '#1d4ed8').gradient
+        ? themeMidHex(themePaintParse(hiddenUtama.value, '#1d4ed8').start, themePaintParse(hiddenUtama.value, '#1d4ed8').end)
+        : themePaintParse(hiddenUtama.value, '#1d4ed8').solid, hiddenLatar.value, 20);
+      preview.style.color = themeLum(prevArea) > 0.42 ? '#0b1220' : '#e6edf7';
+      areaPick.disabled = areaAuto.checked;
       gradFields.classList.toggle('hidden', !useGrad.checked);
       THEME_PALETTES.forEach(function (p) {
         const btn = paletteBtns[p.id];
@@ -1530,17 +1565,20 @@ function viewSettings() {
       paletteBtns[p.id] = btn;
       return btn;
     }));
-    [utamaStart, utamaEnd, accentPick, latarPick, gradAngle].forEach(function (el) {
+    [utamaStart, utamaEnd, accentPick, latarPick, areaPick, gradAngle].forEach(function (el) {
       el.addEventListener('input', syncTheme);
     });
     useGrad.addEventListener('change', syncTheme);
+    areaAuto.addEventListener('change', syncTheme);
     syncTheme();
     form.appendChild(h('div', { class: 'form-section' },
       h('div', { class: 'section-head' }, h('h3', null, 'Tema Halaman Publik')),
       h('p', { class: 'muted small' }, 'Palet berlaku untuk landing page dan halaman pendaftaran. Pilih warna solid atau gradien, lalu sesuaikan warna latar dan aksen.'),
       paletteGrid,
-      h('div', { class: 'theme-grid' }, fld('Warna utama', utamaStart), fld('Warna aksen', accentPick), fld('Warna latar halaman', latarPick)),
+      h('div', { class: 'theme-grid' }, fld('Warna utama', utamaStart), fld('Warna aksen', accentPick), fld('Warna latar halaman', latarPick), fld('Warna area (header & kartu)', areaPick)),
       h('label', { class: 'small', style: 'display:inline-flex;align-items:center;gap:8px;margin:0 0 8px' }, useGrad, 'Gunakan gradien pada warna utama'),
+      h('label', { class: 'small', style: 'display:inline-flex;align-items:center;gap:8px;margin:0 0 8px' }, areaAuto, 'Warna area otomatis dari warna utama'),
+      h('p', { class: 'muted small' }, 'Warna teks pada area menyesuaikan otomatis: area terang memakai teks gelap, area gelap memakai teks terang.'),
       gradFields,
       preview));
 
@@ -1597,11 +1635,23 @@ function viewSettings() {
 
     inputs.kendaraan_opsi = h('textarea', { rows: 4, value: v.kendaraan_opsi || '', placeholder: 'Motor\nMobil\nBus' });
     inputs.kendaraan_wajib = sel([['TIDAK', 'Tidak wajib (boleh dikosongkan)'], ['YA', 'Wajib dipilih']], v.kendaraan_wajib === 'YA' ? 'YA' : 'TIDAK');
+    inputs.nopol_aktif = sel([['TIDAK', 'Tidak ditampilkan'], ['YA', 'Tampilkan isian']], v.nopol_aktif === 'YA' ? 'YA' : 'TIDAK');
+    inputs.nopol_wajib = sel([['TIDAK', 'Tidak wajib (boleh dikosongkan)'], ['YA', 'Wajib diisi']], v.nopol_wajib === 'YA' ? 'YA' : 'TIDAK');
+    inputs.nomor_kendaraan_aktif = sel([['TIDAK', 'Tidak ditampilkan'], ['YA', 'Tampilkan isian']], v.nomor_kendaraan_aktif === 'YA' ? 'YA' : 'TIDAK');
+    inputs.nomor_kendaraan_wajib = sel([['TIDAK', 'Tidak wajib (boleh dikosongkan)'], ['YA', 'Wajib diisi']], v.nomor_kendaraan_wajib === 'YA' ? 'YA' : 'TIDAK');
     form.appendChild(h('div', { class: 'form-section' },
       h('div', { class: 'section-head' }, h('h3', null, 'Jenis Kendaraan')),
-      h('p', { class: 'muted small' }, 'Pertanyaan "Jenis kendaraan" muncul di bagian data pembeli, sekali per pesanan. Isi daftar pilihan manual, satu pilihan per baris. Kosongkan daftar untuk menyembunyikan pertanyaan ini.'),
+      h('p', { class: 'muted small' }, 'Pertanyaan kendaraan muncul di bagian data pembeli, sekali per pesanan. Isi daftar pilihan manual, satu pilihan per baris. Kosongkan daftar untuk menyembunyikan pilihan jenis kendaraan.'),
       fld('Daftar jenis kendaraan (satu per baris)', inputs.kendaraan_opsi, 'Contoh: Motor, Mobil, Bus, Sepeda. Maksimal 30 pilihan, tiap pilihan maksimal 40 huruf.'),
-      fld('Kewajiban menjawab', inputs.kendaraan_wajib)));
+      fld('Kewajiban memilih jenis kendaraan', inputs.kendaraan_wajib),
+      h('div', { class: 'form-section' },
+        h('div', { class: 'section-head' }, h('h3', null, 'Nomor Polisi')),
+        fld('Tampilkan isian nomor polisi', inputs.nopol_aktif),
+        fld('Kewajiban nomor polisi', inputs.nopol_wajib)),
+      h('div', { class: 'form-section' },
+        h('div', { class: 'section-head' }, h('h3', null, 'Nomor Kendaraan')),
+        fld('Tampilkan isian nomor kendaraan', inputs.nomor_kendaraan_aktif),
+        fld('Kewajiban nomor kendaraan', inputs.nomor_kendaraan_wajib))));
 
     inputs.video_pakai_poster = sel([['YA', 'Ya, kirim poster ke Veo'], ['TIDAK', 'Tidak (teks saja)']], v.video_pakai_poster);
     form.appendChild(fld('Poster untuk video promo', inputs.video_pakai_poster));
@@ -2105,6 +2155,8 @@ function orderCard(o, onChange) {
       meta('Email', o.email, true),
       meta('No. HP', o.no_hp || '-'),
       o.jenis_kendaraan ? meta('Kendaraan', o.jenis_kendaraan) : null,
+      o.nomor_polisi ? meta('Nomor polisi', o.nomor_polisi) : null,
+      o.nomor_kendaraan ? meta('Nomor kendaraan', o.nomor_kendaraan) : null,
       meta('Dipesan', fmtDT(o.dibuat_pada))),
     o.diverifikasi_oleh ? h('div', { class: 'order-note' }, 'Diproses ' + o.diverifikasi_oleh + ' (' + fmtDT(o.diverifikasi_pada) + ')') : null,
     o.catatan ? h('div', { class: 'small', style: 'color:var(--bad)' }, 'Catatan: ' + o.catatan) : null,
@@ -2391,20 +2443,44 @@ function applyColors() {
   const lift = function (whitePct, tintPct) {
     return 'color-mix(in srgb, #ffffff ' + whitePct + '%, color-mix(in srgb, ' + tint + ' ' + tintPct + '%, ' + latar + '))';
   };
+  // Warna area (header + kartu). Kosong = otomatis dari warna utama.
+  const areaRaw = String(BOOT.area || '').trim();
+  const areaHex = /^#[0-9a-fA-F]{6}$/.test(areaRaw) ? areaRaw : '';
+  const tintHex = u.gradient ? themeMidHex(u.start, u.end) : u.solid;
+  const lightArea = themeLum(areaHex || themeHexMix(tintHex, latar, 20)) > 0.42;
+  const inkArea = lightArea ? '#0b1220' : '#e6edf7';
+  const mutedArea = lightArea ? '#52627a' : '#94a3b8';
+  // Teks di luar kartu mengikuti warna latar halaman, bukan warna area.
+  const lightPage = themeLum(latar) > 0.42;
   set('--bg', latar);
-  set('--surface', lift(6, 14));
-  set('--surface-2', lift(9, 18));
-  set('--surface-3', lift(13, 24));
+  if (areaHex) {
+    set('--surface', areaHex);
+    set('--surface-2', themeHexMix(areaHex, lightArea ? '#ffffff' : '#000000', 92));
+    set('--surface-3', themeHexMix(areaHex, lightArea ? '#ffffff' : '#000000', 84));
+    set('--top-bg', areaHex);
+  } else {
+    set('--surface', lift(6, 14));
+    set('--surface-2', lift(9, 18));
+    set('--surface-3', lift(13, 24));
+    set('--top-bg', lift(8, 16));
+  }
+  set('--ink', lightPage ? '#0b1220' : '#e6edf7');
+  set('--muted', lightPage ? '#52627a' : '#94a3b8');
+  set('--area-ink', inkArea);
+  set('--area-muted', mutedArea);
+  set('--top-ink', lightArea ? '#0b1220' : '#f8fafc');
+  set('--link', lightArea ? u.solid : 'color-mix(in srgb, ' + u.solid + ' 62%, #fff)');
+  set('--line', lightArea ? '#e2e8f0' : '#243149');
+  set('--line-strong', lightArea ? '#cbd5e1' : '#334155');
+  set('--input-bg', lightArea ? '#ffffff' : '#0b1322');
+  set('--input-border', lightArea ? '#c3cddd' : '#334155');
+  set('--row-alt', lightArea ? 'rgba(255,255,255,.55)' : 'rgba(255,255,255,.04)');
+  set('--chip-bg', lightArea ? '#f1f5f9' : '#1e293b');
+  set('--chip-ink', lightArea ? '#334155' : '#cbd5e1');
+  set('--top-line', lightArea ? 'rgba(11,18,32,.12)' : 'rgba(255,255,255,.12)');
   set('--card', 'var(--surface)');
   set('--soft', 'var(--surface-2)');
   set('--secondary-surface', 'var(--surface-3)');
-  set('--line', lift(17, 28));
-  set('--line-strong', lift(24, 34));
-  set('--input-bg', lift(6, 16));
-  set('--input-border', lift(22, 30));
-  set('--row-alt', lift(8, 16));
-  set('--chip-bg', lift(12, 22));
-  set('--top-bg', lift(8, 16));
 }
 
 function applyTheme() {

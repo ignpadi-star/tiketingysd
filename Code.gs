@@ -47,7 +47,9 @@ const SCHEMA = {
       // jumlah paket yang dibeli (1 paket bisa berisi beberapa tiket)
       'paket',
       // jenis kendaraan yang dipakai pembeli (dipilih dari daftar di Pengaturan)
-      'jenis_kendaraan'],
+      'jenis_kendaraan',
+      // nomor polisi dan nomor kendaraan (diisi pembeli, opsional tergantung Pengaturan)
+      'nomor_polisi', 'nomor_kendaraan'],
     num: ['jumlah', 'total_harga', 'paket']
   },
   Tickets: {
@@ -104,11 +106,17 @@ const DEFAULT_SETTINGS = {
   // Pertanyaan jenis kendaraan per pesanan. Opsi dipisah baris baru.
   kendaraan_opsi: '',
   kendaraan_wajib: 'TIDAK',
+  nopol_aktif: 'TIDAK',
+  nopol_wajib: 'TIDAK',
+  nomor_kendaraan_aktif: 'TIDAK',
+  nomor_kendaraan_wajib: 'TIDAK',
+  warna_area: '',
 };
 
 // Setting yang boleh diubah dari tampilan Super Admin
 const EDITABLE_SETTINGS = ['nama_organisasi', 'warna_utama', 'warna_aksen', 'warna_latar', 'kontak_panitia', 'logo_url', 'qris_url', 'racepack_info', 'racepack_fields', 'racepack_fields_required',
-  'kendaraan_opsi', 'kendaraan_wajib',
+  'kendaraan_opsi', 'kendaraan_wajib', 'nopol_aktif', 'nopol_wajib', 'nomor_kendaraan_aktif', 'nomor_kendaraan_wajib',
+  'warna_area',
   'max_tiket_per_order', 'batas_bayar_jam', 'email_pengirim_nama', 'video_model', 'video_pakai_poster', 'musik_loop'];
 
 /* ============================== ROUTING API ============================== */
@@ -207,7 +215,15 @@ function doGet(e) {
       logo: st.logo_url, qris: st.qris_url || '', kontak: st.kontak_panitia, url: ScriptApp.getService().getUrl() || '',
       maxQty: Number(st.max_tiket_per_order) || 10, startEvent: startEvent,
       musik: st.musik_url || '', musikLoop: String(st.musik_loop || '').toUpperCase() === 'YA', musikNama: st.musik_nama || '',
-      kendaraan: { opsi: String(st.kendaraan_opsi || '').split('\n').filter(function (x) { return x; }), wajib: String(st.kendaraan_wajib || '').toUpperCase() === 'YA' }
+      kendaraan: {
+        opsi: String(st.kendaraan_opsi || '').split('\n').filter(function (x) { return x; }),
+        wajib: String(st.kendaraan_wajib || '').toUpperCase() === 'YA',
+        nopolAktif: String(st.nopol_aktif || '').toUpperCase() === 'YA',
+        nopolWajib: String(st.nopol_wajib || '').toUpperCase() === 'YA',
+        nomorAktif: String(st.nomor_kendaraan_aktif || '').toUpperCase() === 'YA',
+        nomorWajib: String(st.nomor_kendaraan_wajib || '').toUpperCase() === 'YA'
+      },
+      area: st.warna_area || ''
     }).replace(/</g, '\\u003c');
     return t.evaluate()
       .setTitle(st.nama_organisasi + (isAdminPage ? ' - Admin' : ' - Tiket Kegiatan'))
@@ -571,6 +587,12 @@ function settingsSave_(p) {
       if (k === 'video_pakai_poster') val = val === 'YA' ? 'YA' : 'TIDAK';
       if (k === 'musik_loop') val = val === 'YA' ? 'YA' : 'TIDAK';
       if (k === 'kendaraan_wajib') val = val === 'YA' ? 'YA' : 'TIDAK';
+      if (k === 'nopol_aktif' || k === 'nopol_wajib' || k === 'nomor_kendaraan_aktif' || k === 'nomor_kendaraan_wajib') {
+        val = val === 'YA' ? 'YA' : 'TIDAK';
+      }
+      if (k === 'warna_area') {
+        if (val && !/^#[0-9a-fA-F]{6}$/.test(val)) throw userErr_('Warna area harus berformat #RRGGBB.');
+      }
       if (k === 'logo_url' && val && !/^https:\/\//i.test(val)) throw userErr_('URL logo harus diawali https://');
       if (k === 'qris_url' && val && !/^https:\/\//i.test(val)) throw userErr_('URL gambar QRIS harus diawali https://');
       setSetting_(k, val);
@@ -1062,6 +1084,12 @@ function pubOrder_(p) {
     if (jenisKendaraan && kendaraanOpsi.indexOf(jenisKendaraan) < 0) throw userErr_('Jenis kendaraan tidak valid.');
     if (!jenisKendaraan && String(st.kendaraan_wajib || '').toUpperCase() === 'YA') throw userErr_('Jenis kendaraan wajib dipilih.');
   }
+  const nopolAktif = String(st.nopol_aktif || '').toUpperCase() === 'YA';
+  const nomorAktif = String(st.nomor_kendaraan_aktif || '').toUpperCase() === 'YA';
+  let nomorPolisi = nopolAktif ? clean_(p.nomor_polisi, 20).toUpperCase() : '';
+  let nomorKendaraan = nomorAktif ? clean_(p.nomor_kendaraan, 40) : '';
+  if (nopolAktif && !nomorPolisi && String(st.nopol_wajib || '').toUpperCase() === 'YA') throw userErr_('Nomor polisi wajib diisi.');
+  if (nomorAktif && !nomorKendaraan && String(st.nomor_kendaraan_wajib || '').toUpperCase() === 'YA') throw userErr_('Nomor kendaraan wajib diisi.');
   const tkey = 'OC_' + email;
   throttle_(tkey, 6);
 
@@ -1093,6 +1121,7 @@ function pubOrder_(p) {
       order_id: newOrderId_(existing), event_id: ev.event_id, type_id: t.type_id,
       nama_pembeli: nama, email: email, no_hp: hp, jumlah: jumlah, total_harga: total, paket: paket,
       jenis_kendaraan: jenisKendaraan,
+      nomor_polisi: nomorPolisi, nomor_kendaraan: nomorKendaraan,
       bukti_bayar_url: '', status: total === 0 ? 'MENUNGGU_VERIFIKASI' : 'MENUNGGU_BAYAR',
       catatan: '', dibuat_pada: nowStr_(), diverifikasi_oleh: '', diverifikasi_pada: '',
       data_peserta: JSON.stringify(peserta)
@@ -1606,6 +1635,7 @@ function orderList_(p) {
       order_id: o.order_id, event_id: o.event_id, kegiatan: (events[o.event_id] || {}).nama_kegiatan || '-',
       nama_tiket: (types[o.type_id] || {}).nama_tiket || '-', nama_pembeli: o.nama_pembeli, email: o.email, no_hp: o.no_hp,
       jenis_kendaraan: o.jenis_kendaraan || '',
+      nomor_polisi: o.nomor_polisi || '', nomor_kendaraan: o.nomor_kendaraan || '',
       jumlah: o.jumlah, paket: Number(o.paket) || 0, isi_tiket: Math.max(1, Number((types[o.type_id] || {}).isi_tiket) || 1),
       total_harga: o.total_harga, status: o.status, catatan: o.catatan, dibuat_pada: o.dibuat_pada,
       diverifikasi_oleh: o.diverifikasi_oleh, diverifikasi_pada: o.diverifikasi_pada, ada_bukti: !!o.bukti_bayar_url
