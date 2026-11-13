@@ -571,6 +571,11 @@ function viewEvent() {
     const nm = h('input', { type: 'text', maxlength: 100, autocomplete: 'name', placeholder: 'Nama lengkap' });
     const em = h('input', { type: 'email', maxlength: 120, autocomplete: 'email', placeholder: 'nama@email.com' });
     const hp = h('input', { type: 'tel', maxlength: 20, autocomplete: 'tel', placeholder: '08xxxxxxxxxx' });
+    const kendaraanCfg = BOOT.kendaraan || { opsi: [], wajib: false };
+    const kendaraanOpsi = Array.isArray(kendaraanCfg.opsi) ? kendaraanCfg.opsi : [];
+    const kendaraanInp = kendaraanOpsi.length
+      ? sel([['', kendaraanCfg.wajib ? 'Pilih jenis kendaraan' : 'Tidak diisi']].concat(kendaraanOpsi.map(function (x) { return [x, x]; })), '')
+      : null;
 
     const rpFields = (e.racepack_fields || []).filter(function (f) { return f.key !== 'nama_pemegang'; });
     const pesertaBox = h('div');
@@ -654,6 +659,7 @@ function viewEvent() {
       const payload = {
         event_id: e.event_id, type_id: selType, nama: nm.value, email: em.value, no_hp: hp.value,
         jumlah: jumlah, paket: paket,
+        jenis_kendaraan: kendaraanInp ? kendaraanInp.value : '',
         peserta: pesertaInputs.map(function (p) {
           const data = {};
           Object.keys(p.fields).forEach(function (k) { data[k] = p.fields[k].value; });
@@ -674,6 +680,9 @@ function viewEvent() {
         h('div', { class: 'section-head' }, h('h3', null, 'Data pembeli')),
         h('div', { class: 'row2' }, fld(qtyLabel, qtyIn, qtyHint), fld('Nama pembeli', nm)),
         h('div', { class: 'row2' }, fld('Email (e-tiket dikirim ke sini)', em), fld('No. HP / WhatsApp', hp, 'Boleh dikosongkan jika diisi pada data peserta.'))),
+      kendaraanInp ? h('div', { class: 'form-section' },
+        h('div', { class: 'section-head' }, h('h3', null, 'Kendaraan')),
+        fld('Jenis kendaraan', kendaraanInp, kendaraanCfg.wajib ? 'Wajib dipilih sebelum memesan.' : 'Pilih kendaraan yang akan digunakan saat datang ke lokasi.')) : null,
       h('div', { class: 'form-section' },
         h('div', { class: 'section-head' }, h('h3', null, 'Data peserta'),
           e.racepack_aktif ? h('span', { class: 'muted small' }, 'Dipakai untuk race pack') : null),
@@ -1586,6 +1595,14 @@ function viewSettings() {
       fieldsList, addFieldBtn,
       h('p', { class: 'muted small' }, 'Kolom ini muncul di formulir pendaftaran dan race pack. Centang kotak di tiap kolom untuk menandai wajib secara individual.')));
 
+    inputs.kendaraan_opsi = h('textarea', { rows: 4, value: v.kendaraan_opsi || '', placeholder: 'Motor\nMobil\nBus' });
+    inputs.kendaraan_wajib = sel([['TIDAK', 'Tidak wajib (boleh dikosongkan)'], ['YA', 'Wajib dipilih']], v.kendaraan_wajib === 'YA' ? 'YA' : 'TIDAK');
+    form.appendChild(h('div', { class: 'form-section' },
+      h('div', { class: 'section-head' }, h('h3', null, 'Jenis Kendaraan')),
+      h('p', { class: 'muted small' }, 'Pertanyaan "Jenis kendaraan" muncul di bagian data pembeli, sekali per pesanan. Isi daftar pilihan manual, satu pilihan per baris. Kosongkan daftar untuk menyembunyikan pertanyaan ini.'),
+      fld('Daftar jenis kendaraan (satu per baris)', inputs.kendaraan_opsi, 'Contoh: Motor, Mobil, Bus, Sepeda. Maksimal 30 pilihan, tiap pilihan maksimal 40 huruf.'),
+      fld('Kewajiban menjawab', inputs.kendaraan_wajib)));
+
     inputs.video_pakai_poster = sel([['YA', 'Ya, kirim poster ke Veo'], ['TIDAK', 'Tidak (teks saja)']], v.video_pakai_poster);
     form.appendChild(fld('Poster untuk video promo', inputs.video_pakai_poster));
 
@@ -2087,6 +2104,7 @@ function orderCard(o, onChange) {
       meta('Total', rupiah(o.total_harga)),
       meta('Email', o.email, true),
       meta('No. HP', o.no_hp || '-'),
+      o.jenis_kendaraan ? meta('Kendaraan', o.jenis_kendaraan) : null,
       meta('Dipesan', fmtDT(o.dibuat_pada))),
     o.diverifikasi_oleh ? h('div', { class: 'order-note' }, 'Diproses ' + o.diverifikasi_oleh + ' (' + fmtDT(o.diverifikasi_pada) + ')') : null,
     o.catatan ? h('div', { class: 'small', style: 'color:var(--bad)' }, 'Catatan: ' + o.catatan) : null,

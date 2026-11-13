@@ -46,7 +46,9 @@
     musik_url: '',
     musik_nama: '',
     musik_loop: 'TIDAK',
-    qris_url: ''
+    qris_url: '',
+    kendaraan_opsi: '',
+    kendaraan_wajib: 'TIDAK'
   };
 
   var racepackRows = [
@@ -79,6 +81,7 @@
       order_id: 'TKT-DEMO-1', event_id: 'EV-DEMO-1', kegiatan: 'Konser Demo', nama_tiket: 'VIP',
       nama_pembeli: 'Budi Santoso', email: 'budi@example.com', no_hp: '08123456789',
       jumlah: 2, total_harga: 300000, status: 'DITERIMA', catatan: '', dibuat_pada: '2026-10-27 09:00:00',
+      jenis_kendaraan: 'Mobil',
       diverifikasi_oleh: 'Admin', diverifikasi_pada: '2026-10-27 09:30:00', ada_bukti: true
     },
     {
@@ -176,9 +179,22 @@
       qty = paket * isi;
       if (!(qty >= 1)) return fail('Jumlah tiket wajib diisi.');
       if (qty > 5) return fail('Maksimal ' + Math.max(1, Math.floor(5 / isi)) + ' paket per pesanan.');
+      var kOpsi = String(settingsData.kendaraan_opsi || '').split('\n').map(function (x) { return x.trim(); }).filter(function (x) { return x; });
+      var kWajibCfg = String(settingsData.kendaraan_wajib || '').toUpperCase() === 'YA';
+      if (!kOpsi.length && typeof BOOT !== 'undefined' && BOOT.kendaraan && Array.isArray(BOOT.kendaraan.opsi)) {
+        kOpsi = BOOT.kendaraan.opsi;
+        kWajibCfg = !!BOOT.kendaraan.wajib;
+      }
+      var kJenis = String(payload.jenis_kendaraan || '').trim();
+      if (!kOpsi.length) kJenis = '';
+      else {
+        if (kJenis && kOpsi.indexOf(kJenis) < 0) return fail('Jenis kendaraan tidak valid.');
+        if (!kJenis && kWajibCfg) return fail('Jenis kendaraan wajib dipilih.');
+      }
       return {
         order_id: 'TKT-DEMO-NEW', total_harga: t.harga * paket, jumlah: qty, paket: paket, isi_tiket: isi, status: 'MENUNGGU_BAYAR',
         nama_kegiatan: ev2.nama_kegiatan, nama_tiket: t.nama_tiket, info_pembayaran: 'Transfer BCA 123',
+        jenis_kendaraan: kJenis,
         batas_bayar_jam: 24, racepack_info: 'Ambil race pack di booth A.'
       };
     }
@@ -340,6 +356,19 @@
         settingsData.qris_url = '';
       } else if (payload.qris && payload.qris.name) {
         settingsData.qris_url = 'mock://qris/' + encodeURIComponent(payload.qris.name);
+      }
+      if (payload.values && payload.values.kendaraan_opsi !== undefined) {
+        var seenK = {};
+        settingsData.kendaraan_opsi = String(payload.values.kendaraan_opsi || '').split(/\r?\n/).map(function (x) {
+          return String(x || '').replace(/\s+/g, ' ').trim().slice(0, 40);
+        }).filter(function (x) {
+          if (!x || seenK[x.toLowerCase()]) return false;
+          seenK[x.toLowerCase()] = true;
+          return true;
+        }).slice(0, 30).join('\n');
+      }
+      if (payload.values && payload.values.kendaraan_wajib !== undefined) {
+        settingsData.kendaraan_wajib = String(payload.values.kendaraan_wajib).toUpperCase() === 'YA' ? 'YA' : 'TIDAK';
       }
       return clone(settingsData);
     }

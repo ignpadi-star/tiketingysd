@@ -75,6 +75,8 @@ def compile_template(path, query=''):
     if qs.get('musik'):
         musik = '/tests/fixtures/lagu-uji.mp3'
         musik_nama = 'Lagu Uji'
+    kendaraan_opsi = [x for x in qs.get('kendaraan', [''])[0].split('|') if x]
+    kendaraan_wajib = qs.get('kendaraanWajib', [''])[0] == '1'
     mock_boot = {
         "org": "Organisasi Demo",
         "url": "http://localhost:8500/Admin.html",
@@ -88,6 +90,7 @@ def compile_template(path, query=''):
         "musikLoop": bool(musik),
         "musikNama": musik_nama,
         "qris": qs.get('qris', [''])[0],
+        "kendaraan": {"opsi": kendaraan_opsi, "wajib": kendaraan_wajib},
         "debug": True
     }
     content = BOOT_RE.sub(json.dumps(mock_boot), content)

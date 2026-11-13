@@ -229,6 +229,34 @@ describe('admin', { tags: ['admin'] }, () => {
     await expect(screen.getByRole('img', 'Panduan ukuran kaos')).toBeVisible();
   });
 
+  test('pengaturan: jenis kendaraan manual dan wajib', async ({ app, screen, browser }) => {
+    await masukSebagai(browser, ADMIN);
+    await app.open('/Admin.html');
+    await menu(screen).getByRole('button', 'Pengaturan').tap();
+
+    await expect(screen.getByRole('heading', 'Jenis Kendaraan')).toBeVisible();
+
+    await screen.getByLabel('Daftar jenis kendaraan (satu per baris)').fill('Motor\nMobil\nBus');
+    await screen.getByLabel('Kewajiban menjawab').selectOption('Wajib dipilih');
+    await screen.getByRole('button', 'Simpan Pengaturan').tap();
+
+    await expect(screen.getByText('Pengaturan tersimpan.')).toBeVisible();
+    await expect(screen.getByLabel('Daftar jenis kendaraan (satu per baris)')).toHaveValue('Motor\nMobil\nBus');
+    await expect(screen.getByLabel('Kewajiban menjawab')).toHaveValue('YA');
+  });
+
+  test('pesanan: kartu menampilkan jenis kendaraan', async ({ app, screen, browser }) => {
+    await masukSebagai(browser, ADMIN);
+    await app.open('/Admin.html');
+    await menu(screen).getByRole('button', 'Pesanan').tap();
+
+    await screen.getByLabel('Pencarian').fill('TKT-DEMO-1');
+    await screen.getByRole('button', 'Cari').tap();
+
+    await expect(screen.getByText('Kendaraan')).toBeVisible();
+    await expect(screen.getByText('Mobil')).toBeVisible();
+  });
+
   test('pengaturan: simpan dan terbaca kembali', async ({ app, screen, browser }) => {
     await masukSebagai(browser, ADMIN);
     await app.open('/Admin.html');
