@@ -212,6 +212,23 @@ describe('admin', { tags: ['admin'] }, () => {
     await expect(screen.getByText('Kegiatan Uji')).toHaveCount(0);
   });
 
+  test('kegiatan: unggah gambar ukuran kaos', async ({ app, screen, browser }) => {
+    await masukSebagai(browser, ADMIN);
+    await app.open('/Admin.html');
+    await menu(screen).getByRole('button', 'Kegiatan').tap();
+    await screen.getByRole('button', 'Kelola').first().tap();
+    await expect(screen.getByRole('heading', 'Kelola Kegiatan')).toBeVisible();
+
+    await expect(screen.getByRole('heading', 'Race pack')).toBeVisible();
+    await expect(screen.getByRole('img', 'Panduan ukuran kaos')).toBeVisible();
+
+    await screen.getByLabel('Gambar panduan ukuran kaos (JPG/PNG, maks 5 MB)').setInputFiles('tests/fixtures/kaos-uji.png');
+    await screen.getByRole('button', 'Simpan Perubahan').tap();
+
+    await expect(screen.getByText('Kegiatan tersimpan.')).toBeVisible();
+    await expect(screen.getByRole('img', 'Panduan ukuran kaos')).toBeVisible();
+  });
+
   test('pengaturan: simpan dan terbaca kembali', async ({ app, screen, browser }) => {
     await masukSebagai(browser, ADMIN);
     await app.open('/Admin.html');

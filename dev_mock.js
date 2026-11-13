@@ -8,7 +8,7 @@
       tanggal: '2026-11-01', jam: '19:00', lokasi: 'Jakarta', status: 'AKTIF',
       harga_mulai: 150000, tersedia: true, racepack_aktif: 'YA',
       deskripsi: 'Konser musik tahunan dengan musisi nasional.',
-      bg_halaman_url: '', bg_tiket_url: '', poster_url: '',
+      bg_halaman_url: '', bg_tiket_url: '', poster_url: '', ukuran_kaos_url: '/tests/fixtures/kaos-uji.png',
       tipe: [
         { type_id: 'TT-1', nama_tiket: 'VIP', harga: 250000, kuota: 100, terjual: 80, sisa: 20, status: 'BUKA', isi_tiket: 1 },
         { type_id: 'TT-2', nama_tiket: 'Reguler', harga: 150000, kuota: 200, terjual: 100, sisa: 100, status: 'BUKA', isi_tiket: 1 },
@@ -20,7 +20,7 @@
       tanggal: '2026-11-08', jam: '15:00', lokasi: 'Bandung', status: 'AKTIF',
       harga_mulai: 75000, tersedia: true, racepack_aktif: 'TIDAK',
       deskripsi: 'Festival kuliner dan musik.',
-      bg_halaman_url: '', bg_tiket_url: '', poster_url: '',
+      bg_halaman_url: '', bg_tiket_url: '', poster_url: '', ukuran_kaos_url: '',
       tipe: [
         { type_id: 'TT-3', nama_tiket: 'Reguler', harga: 75000, kuota: 50, terjual: 0, sisa: 50, status: 'BUKA', isi_tiket: 1 }
       ]
@@ -161,6 +161,7 @@
         { key: 'tgl_lahir', label: 'Tanggal Lahir' },
         { key: 'no_hp', label: 'No HP' }
       ] : [];
+      if (ev.racepack_aktif !== 'YA') ev.ukuran_kaos_url = '';
       return ev;
     }
     if (action === 'public.order') {
@@ -225,6 +226,10 @@
       cev.deskripsi = String(payload.deskripsi || '');
       cev.info_pembayaran = String(payload.info_pembayaran || '');
       cev.racepack_aktif = payload.racepack_aktif === 'YA' ? 'YA' : 'TIDAK';
+      if (payload.ukuran_kaos_hapus) cev.ukuran_kaos_url = '';
+      else if (payload.ukuran_kaos && payload.ukuran_kaos.b64) {
+        cev.ukuran_kaos_url = 'data:' + payload.ukuran_kaos.mime + ';base64,' + payload.ukuran_kaos.b64;
+      }
       recalcHarga(cev);
       return { event_id: cev.event_id };
     }

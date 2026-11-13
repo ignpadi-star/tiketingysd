@@ -29,7 +29,9 @@ const SCHEMA = {
       // YA = pendaftar wajib mengisi data peserta/race pack; TIDAK = tidak diminta
       'racepack_aktif',
       // background halaman kegiatan & background tiket (diunggah admin)
-      'bg_halaman_url', 'bg_halaman_file_id', 'bg_tiket_url', 'bg_tiket_file_id'],
+      'bg_halaman_url', 'bg_halaman_file_id', 'bg_tiket_url', 'bg_tiket_file_id',
+      // gambar panduan ukuran kaos per kegiatan (opsional)
+      'ukuran_kaos_url', 'ukuran_kaos_file_id'],
     num: []
   },
   TicketTypes: {
@@ -78,6 +80,7 @@ const DEFAULT_SETTINGS = {
   folder_video_id: '',
   folder_musik_id: '',
   folder_qris_id: '',
+  folder_kaos_id: '',
   qris_url: '',
   qris_file_id: '',
   musik_url: '',
@@ -735,6 +738,26 @@ function applyBg_(ev, urlKey, fileKey, img, hapus) {
   ev[urlKey] = 'https://drive.google.com/thumbnail?id=' + file.getId() + '&sz=w1600';
 }
 
+/** Simpan/hapus gambar panduan ukuran kaos untuk satu kegiatan. */
+function applyKaos_(ev, img, hapus) {
+  if (hapus) {
+    if (ev.ukuran_kaos_file_id) { try { DriveApp.getFileById(ev.ukuran_kaos_file_id).setTrashed(true); } catch (e) { /* abaikan */ } }
+    ev.ukuran_kaos_file_id = '';
+    ev.ukuran_kaos_url = '';
+    return;
+  }
+  if (!img || !img.b64) return;
+  const st = settings_();
+  let folder;
+  try { folder = DriveApp.getFolderById(st.folder_kaos_id); }
+  catch (e) { folder = DriveApp.createFolder('Tiket - Kaos'); setSetting_('folder_kaos_id', folder.getId()); }
+  const file = folder.createFile(decodeImage_(img.b64, img.mime, 'ukuran-kaos-' + Date.now(), 'gambar ukuran kaos'));
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  if (ev.ukuran_kaos_file_id) { try { DriveApp.getFileById(ev.ukuran_kaos_file_id).setTrashed(true); } catch (e) { /* abaikan */ } }
+  ev.ukuran_kaos_file_id = file.getId();
+  ev.ukuran_kaos_url = 'https://drive.google.com/thumbnail?id=' + file.getId() + '&sz=w1200';
+}
+
 /* ============================== PASSWORD & SESSION ============================== */
 
 function hash_(pw, salt) {
@@ -917,6 +940,7 @@ function pubEventObj_(ev, types) {
     harga_mulai: min, tersedia: open.length > 0,
     racepack_aktif: rpOn,
     racepack_info: rpOn ? (st.racepack_info || '') : '',
+    ukuran_kaos_url: rpOn ? (ev.ukuran_kaos_url || '') : '',
     bg_halaman_url: ev.bg_halaman_url || ''
 };
 }
@@ -1377,6 +1401,7 @@ function eventSave_(p, s) {
     }
     applyBg_(ev, 'bg_halaman_url', 'bg_halaman_file_id', p.bg_halaman, p.bg_halaman_hapus);
     applyBg_(ev, 'bg_tiket_url', 'bg_tiket_file_id', p.bg_tiket, p.bg_tiket_hapus);
+    applyKaos_(ev, p.ukuran_kaos, p.ukuran_kaos_hapus);
     if (isNew) appendRows_('Events', [ev]); else updateRow_('Events', ev);
     return { event_id: ev.event_id,
 };
@@ -1396,6 +1421,7 @@ function eventDelete_(p) {
     ['bg_halaman_file_id', 'bg_tiket_file_id'].forEach(function (k) {
       if (ev[k]) { try { DriveApp.getFileById(ev[k]).setTrashed(true); } catch (e) { /* abaikan */ } }
     });
+    if (ev.ukuran_kaos_file_id) { try { DriveApp.getFileById(ev.ukuran_kaos_file_id).setTrashed(true); } catch (e) { /* abaikan */ } }
     return true;
   });
 }

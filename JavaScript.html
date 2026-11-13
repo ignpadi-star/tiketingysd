@@ -680,6 +680,11 @@ function viewEvent() {
         h('p', { class: 'muted small' }, e.racepack_aktif
           ? 'Isi data setiap peserta sesuai jumlah tiket. Data ini dipakai saat pembagian race pack.'
           : 'Nama peserta dicetak pada e-tiket. Kosongkan jika tiket atas nama pembeli.'),
+        e.ukuran_kaos_url ? h('div', { class: 'size-chart-box' },
+          h('div', { class: 'label' }, 'Panduan ukuran kaos'),
+          h('a', { href: e.ukuran_kaos_url, target: '_blank', rel: 'noopener' },
+            h('img', { class: 'size-chart', src: e.ukuran_kaos_url, alt: 'Panduan ukuran kaos', loading: 'lazy' })),
+          h('p', { class: 'muted small' }, 'Klik gambar untuk memperbesar sebelum memilih ukuran.')) : null,
         pesertaBox),
       h('div', { class: 'checkout' },
         h('div', null, h('div', { class: 'label' }, 'Total pembayaran'), h('div', { class: 'amount' }, totalEl)),
@@ -1082,6 +1087,8 @@ function viewEventForm() {
       desk: h('textarea', { maxlength: 3000, value: ev ? ev.deskripsi : '' }),
       bayar: h('textarea', { maxlength: 1500, value: ev ? ev.info_pembayaran : '', placeholder: 'Contoh: Transfer BCA 1234567890 a.n. Panitia. Atau scan QRIS ...' }),
       racepack: sel([['TIDAK', 'Nonaktif'], ['YA', 'Aktif']], (ev && String(ev.racepack_aktif).toUpperCase() === 'YA') ? 'YA' : 'TIDAK'),
+      kaos: h('input', { type: 'file', accept: 'image/jpeg,image/png' }),
+      kaosHapus: h('input', { type: 'checkbox', style: 'width:auto;min-height:0;height:16px' }),
       poster: h('input', { type: 'file', accept: 'image/jpeg,image/png' }),
       bgHalaman: h('input', { type: 'file', accept: 'image/jpeg,image/png' }),
       bgHapusHalaman: h('input', { type: 'checkbox', style: 'width:auto;min-height:0;height:16px' }),
@@ -1100,6 +1107,18 @@ function viewEventForm() {
     f.bgTiket.addEventListener('change', function () {
       if (f.bgTiket.files[0]) { prevBgTiket.src = URL.createObjectURL(f.bgTiket.files[0]); prevBgTiket.style.display = 'block'; }
     });
+    const prevKaos = h('img', { class: 'size-chart', alt: 'Panduan ukuran kaos' });
+    const syncKaosPreview = function () {
+      const url = (ev && ev.ukuran_kaos_url) || '';
+      const tampil = url && !f.kaosHapus.checked;
+      prevKaos.style.display = tampil ? 'block' : 'none';
+      if (tampil) prevKaos.src = url;
+    };
+    syncKaosPreview();
+    f.kaos.addEventListener('change', function () {
+      if (f.kaos.files[0]) { prevKaos.src = URL.createObjectURL(f.kaos.files[0]); prevKaos.style.display = 'block'; f.kaosHapus.checked = false; }
+    });
+    f.kaosHapus.addEventListener('change', function () { if (f.kaosHapus.checked) syncKaosPreview(); });
 
     async function save() {
       const r = await act(async function () {
@@ -1113,6 +1132,9 @@ function viewEventForm() {
         if (f.bgHapusHalaman.checked) p.bg_halaman_hapus = true;
         if (f.bgTiket.files[0]) { const fl = await readFile(f.bgTiket.files[0], { maxSide: 1920, quality: 0.85 }); p.bg_tiket = { b64: fl.b64, mime: fl.mime }; }
         if (f.bgHapusTiket.checked) p.bg_tiket_hapus = true;
+        // Gambar ukuran kaos tidak dikompres agar angka ukuran tetap tajam.
+        if (f.kaos.files[0]) { const fl = await readFileRaw(f.kaos.files[0]); p.ukuran_kaos = { b64: fl.b64, mime: fl.mime }; }
+        if (f.kaosHapus.checked) p.ukuran_kaos_hapus = true;
         return call('event.save', p);
       });
       if (r) { toast('Kegiatan tersimpan.', 'ok'); go('eventform', { id: r.event_id }); }
@@ -1135,7 +1157,12 @@ function viewEventForm() {
           fld('Info pembayaran (rekening / QRIS)', f.bayar, 'Ditampilkan ke pembeli setelah memesan.')),
         h('div', { class: 'form-section' },
           h('div', { class: 'section-head' }, h('h3', null, 'Race pack')),
-          fld('Permintaan data race pack', f.racepack, 'Aktif: pendaftar mengisi data peserta/race pack per tiket. Nonaktif: pendaftar hanya mengisi nama peserta.')),
+          fld('Permintaan data race pack', f.racepack, 'Aktif: pendaftar mengisi data peserta/race pack per tiket. Nonaktif: pendaftar hanya mengisi nama peserta.'),
+          h('div', { class: 'mt' },
+            fld('Gambar panduan ukuran kaos (JPG/PNG, maks 5 MB)', f.kaos),
+            prevKaos,
+            ev && ev.ukuran_kaos_url ? h('label', { class: 'small' }, f.kaosHapus, ' Hapus gambar ukuran kaos') : null,
+            h('p', { class: 'muted small' }, 'Tampil di halaman pendaftaran saat race pack aktif, di atas kolom data peserta. Gambar tidak dikompres agar angka ukuran tetap tajam.'))),
         h('div', { class: 'form-section' },
           h('div', { class: 'section-head' }, h('h3', null, 'Poster & background')),
           fld('Poster (JPG/PNG, maks 5 MB)', f.poster), prev,

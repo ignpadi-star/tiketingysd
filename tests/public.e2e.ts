@@ -47,6 +47,15 @@ describe('publik', { tags: ['public'] }, () => {
     await expect(screen.getByText('Rp250.000')).toBeVisible();
   });
 
+  test('gambar ukuran kaos tampil di data peserta', async ({ app, screen }) => {
+    await app.open('/Index.html');
+    await screen.getByRole('button', 'Beli Tiket').first().tap();
+    await screen.getByText('VIP').first().tap();
+
+    await expect(screen.getByText('Panduan ukuran kaos')).toBeVisible();
+    await expect(screen.getByRole('img', 'Panduan ukuran kaos')).toBeVisible();
+  });
+
   test('QRIS tampil di halaman pembayaran', async ({ app, screen }) => {
     await app.open('/Index.html?qris=/tests/fixtures/qris-uji.png');
     await screen.getByRole('button', 'Beli Tiket').first().tap();
